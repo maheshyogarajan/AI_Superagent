@@ -147,7 +147,7 @@ export default function PersonalityManager() {
                         personality_id: e.target.value 
                       })}
                       disabled={mutation.isPending}
-                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="w-full h-9 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {availablePersonalities.map(personalityId => (
                         <option key={personalityId} value={personalityId}>
