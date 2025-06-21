@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
-import { Label } from '../components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { Slider } from '../components/ui/slider'
 import { Badge } from '../components/ui/badge'
-import { AlertCircle, CheckCircle, Settings, User, Zap, Brain } from 'lucide-react'
+import { AlertCircle, CheckCircle, Settings, User, Zap, Brain, ArrowLeft } from 'lucide-react'
 
 interface Agent {
   id: string
@@ -30,9 +28,10 @@ interface Personality {
 }
 
 export default function AgentCustomizer() {
-  const [agents, setAgents] = useState<Agent[]>([])
+  const { agentId } = useParams<{ agentId: string }>()
+  const navigate = useNavigate()
+  const [agent, setAgent] = useState<Agent | null>(null)
   const [personalities, setPersonalities] = useState<Personality[]>([])
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -42,25 +41,27 @@ export default function AgentCustomizer() {
   const [formData, setFormData] = useState<Partial<Agent>>({})
 
   useEffect(() => {
-    loadAgents()
-    loadPersonalities()
-  }, [])
+    if (agentId) {
+      loadAgent(agentId)
+      loadPersonalities()
+    } else {
+      // If no agentId, redirect to agent list or show agent selection
+      navigate('/agents')
+    }
+  }, [agentId, navigate])
 
-  const loadAgents = async () => {
+  const loadAgent = async (id: string) => {
     try {
-      const response = await fetch('/api/agents')
+      const response = await fetch(`/api/agents/${id}/config`)
       const data = await response.json()
       if (data.status === 'success') {
-        setAgents(data.agents)
-        if (data.agents.length > 0) {
-          setSelectedAgent(data.agents[0])
-          setFormData(data.agents[0])
-        }
+        setAgent(data.agent)
+        setFormData(data.agent)
       } else {
         setError(data.message)
       }
     } catch (err) {
-      setError('Failed to load agents')
+      setError('Failed to load agent configuration')
     }
   }
 
@@ -93,14 +94,14 @@ export default function AgentCustomizer() {
   }
 
   const handleSave = async () => {
-    if (!selectedAgent) return
+    if (!agent || !agentId) return
 
     setIsSaving(true)
     setError(null)
     setSuccess(null)
 
     try {
-      const response = await fetch(`/api/agents/${selectedAgent.id}/config`, {
+      const response = await fetch(`/api/agents/${agentId}/config`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -111,11 +112,8 @@ export default function AgentCustomizer() {
       const data = await response.json()
       if (data.status === 'success') {
         setSuccess('Agent configuration updated successfully')
-        // Update the agent in the list
-        setAgents(prev => prev.map(agent => 
-          agent.id === selectedAgent.id ? data.agent : agent
-        ))
-        setSelectedAgent(data.agent)
+        setAgent(data.agent)
+        setFormData(data.agent)
       } else {
         setError(data.message)
       }
