@@ -1,0 +1,152 @@
+8.1  Agent Personality Profiles (NEW)
+
+OverviewEach agent now carries a configurable Personality Profile inspired by real‑world figures. The profile steers tone, risk tolerance, reasoning depth, default model temperature, and preferred communication style, while staying fully compatible with the existing MCP envelope.
+
+Example Profile Schema
+
+{
+  "profile_id": "SteveJobs",
+  "name": "Steve Jobs",
+  "tone": "visionary, perfection‑seeking",
+  "decision_style": "bold, design‑first, risk‑tolerant",
+  "communication_style": "story‑driven, direct",
+  "max_temperature": 0.9
+}
+
+Starter Profiles
+
+ID
+
+Real Person
+
+One‑Line Essence
+
+SteveJobs
+
+Steve Jobs
+
+Reality‑distortion visionary, obsessed with end‑user delight
+
+WarrenBuffett
+
+Warren Buffett
+
+Long‑term, value‑driven, margin‑of‑safety thinker
+
+RorySutherland
+
+Rory Sutherland
+
+Behavioral‑economics maverick, lateral creativity
+
+BillGates
+
+Bill Gates
+
+Systems‑level pragmatist, relentless learner
+
+ElonMusk
+
+Elon Musk
+
+First‑principles disruptor, aggressive timelines
+
+Implementation Hooks
+
+New Module: create ai_super_agent/personalities/ containing one JSON file per profile.
+
+BaseAgent Update: add optional personality_id: str = "Default"; on __init__ load profile into self.personality.
+
+MCP Extension: optionally embed context.personality so downstream agents & UI display active persona.
+
+Temperature Clamp: LLM calls use min(requested_temp, self.personality["max_temperature"]).
+
+See new Prompts 8A & 8B in the task list for concrete code instructions.
+
+9  Agent Data Structures
+
+9.1 Research Agent
+
+{
+"research_entry_id": "UUID",
+"source_url": "https://…",
+"title": "",
+"published_at": "ISO‑8601",
+"summary": "<string – 150‑word abstract>",
+"full_text_hash": "sha256:…",
+"embedding_vector_ref": "vectordb://research/",
+"citations": [{
+"format": "APA",
+"citation_text": "…"
+}]
+}
+
+9.2 Market‑Intel Agent
+
+{
+"insight_id": "UUID",
+"competitor": "",
+"category": "pricing | product | marketing | legal",
+"observation": "<string – what happened>",
+"impact_estimate": "‑0.15",           // effect on our market share
+"confidence": 0.7,
+"evidence_refs": ["research://entry123", "https://…"]
+}
+
+9.3 Risk‑Analysis Agent
+
+{
+"risk_id": "UUID",
+"description": "Possible IRD policy change on foreign‑income tax",
+"likelihood": 0.35,
+"impact": 0.6,
+"severity": "(likelihood * impact) = 0.21",
+"mitigation": "Diversify client base; lobby for transitional relief",
+"owner": "Mahesh",
+"review_date": "2025‑12‑31"
+}
+
+9.4 Financial‑Model Agent
+
+{
+"model_id": "UUID",
+"scenario_id": "UUID",
+"assumptions_ref": "s3://fin_models/assump_T‑123.json",
+"cashflows": {
+"year0": ‑250000,
+"year1": 120000,
+"year2": 180000
+},
+"npv": 175000,
+"irr": 0.27,
+"sensitivity": {
+"discount_rate": [0.1, 0.15, 0.2],
+"npv": [220000, 175000, 130000]
+}
+}
+
+9.5 Game‑Theory Agent
+
+{
+"simulation_id": "UUID",
+"players": ["Lanka.tax", "CompetitorX"],
+"strategies": { … },
+"equilibria": [{
+"strategy_profile": {"Lanka.tax": "early", "CompetitorX": "passive"},
+"probability": 0.62,
+"payoffs": {"Lanka.tax": 8, "CompetitorX": 5}
+}],
+"sensitivity_runs_ref": "s3://sim_runs/",
+"conclusion": "Early entry most robust unless CompetitorX flips to aggressive pricing."
+}
+
+9.6 Data‑Engineer Agent (Event Record)
+
+{
+"event_id": "UUID",
+"stream": "decision_log",
+"event_type": "task_completed",
+"payload_ref": "s3://…",
+"emitted_at": "ISO‑8601",
+"hash": "sha256:…"
+}
