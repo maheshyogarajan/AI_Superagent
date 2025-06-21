@@ -256,7 +256,7 @@ Research task successfully completed by {self.agent_id} agent.
                     "Content-Type": "application/json"
                 },
                 json={
-                    "model": "o3",
+                    "model": "gpt-4o",
                     "messages": [
                         {"role": "system", "content": "You are a research assistant. Provide comprehensive, factual research findings."},
                         {"role": "user", "content": prompt}
