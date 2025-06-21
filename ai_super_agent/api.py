@@ -8,6 +8,7 @@ from ai_super_agent.views.kpi import kpi_bp
 from ai_super_agent.views.strategy import strategy_bp
 from ai_super_agent.views.logs import logs_bp
 from ai_super_agent.views.agents import agents_bp
+from ai_super_agent.services.plan_inspector import PlanInspector
 
 logger = logging.getLogger(__name__)
 
