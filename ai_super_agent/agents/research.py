@@ -256,7 +256,7 @@ Research task successfully completed by {self.agent_id} agent.
                     "Content-Type": "application/json"
                 },
                 json={
-                    "model": "gpt-4",
+                    "model": "o3",
                     "messages": [
                         {"role": "system", "content": "You are a research assistant. Provide comprehensive, factual research findings."},
                         {"role": "user", "content": prompt}
@@ -281,7 +281,7 @@ Research task successfully completed by {self.agent_id} agent.
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={settings.gemini_api_key}",
+                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key={settings.gemini_api_key}",
                 headers={"Content-Type": "application/json"},
                 json={
                     "contents": [{
