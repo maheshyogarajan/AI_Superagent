@@ -4,7 +4,7 @@ import { TaskRunner } from './pages/TaskRunner'
 import { StrategyViewer } from './pages/StrategyViewer'
 import { PersonalityManager } from './pages/PersonalityManager'
 import { Logs } from './pages/Logs'
-import { WorkingsViewer } from './pages/WorkingsViewer'
+import WorkingsViewer from './pages/WorkingsViewer'
 
 export const router = createBrowserRouter([
   {
