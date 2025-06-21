@@ -1,6 +1,8 @@
 """Research agent for handling research and analysis tasks."""
 
 import logging
+import os
+from datetime import datetime
 from typing import Dict, Any
 from ai_super_agent.agents.base import BaseAgent
 from ai_super_agent.models.mcp import MCPEnvelope
@@ -67,6 +69,33 @@ class ResearchAgent(BaseAgent):
         
         logger.info(f"Executing research task: {instruction[:100]}...")
         
+        # Update workings file with research agent processing
+        task_id = envelope.task_id
+        workings_file = f"data/workings/{task_id}.md"
+        
+        try:
+            research_start = f"""
+## Research Agent Processing
+**Agent:** {self.agent_id}
+**Started:** {datetime.now().isoformat()}
+**Personality:** {self.personality_id}
+
+### Task Analysis
+Analyzing instruction: "{instruction}"
+Context parameters: {len(context)} items provided
+
+--- STEP BREAK ---
+
+## Research Methodology
+Beginning comprehensive research using available LLM providers...
+"""
+            if os.path.exists(workings_file):
+                with open(workings_file, 'a') as f:
+                    f.write(research_start)
+                logger.info(f"Updated workings file with research start")
+        except Exception as e:
+            logger.error(f"Failed to update workings file: {e}")
+        
         # Add initial progress update
         envelope.add_progress_update(10, "Starting research task")
         
@@ -98,6 +127,34 @@ class ResearchAgent(BaseAgent):
             data=research_result
         )
         
+        # Update workings file with final results
+        try:
+            completion_update = f"""
+### Research Results
+**Provider Used:** {research_result.get('provider', 'fallback')}
+**Quality Score:** {self_quality}
+**Completion Time:** {datetime.now().isoformat()}
+
+#### Key Findings
+{research_result.get('summary', 'Research completed with comprehensive analysis')}
+
+#### Recommendations
+{research_result.get('recommendations', 'Strategic insights provided based on analysis')}
+
+--- STEP BREAK ---
+
+## Task Completion
+Research task successfully completed by {self.agent_id} agent.
+**Final Status:** SUCCESS
+**Documentation Generated:** Complete step-by-step workings available
+"""
+            if os.path.exists(workings_file):
+                with open(workings_file, 'a') as f:
+                    f.write(completion_update)
+                logger.info(f"Updated workings file with completion results")
+        except Exception as e:
+            logger.error(f"Failed to update workings file with completion: {e}")
+        
         logger.info(f"Research task completed successfully")
         
         return {
@@ -105,7 +162,8 @@ class ResearchAgent(BaseAgent):
             "message": "Research task completed successfully",
             "result": research_result,
             "agent_id": self.agent_id,
-            "original_sender": original_sender
+            "original_sender": original_sender,
+            "workings_file": workings_file
         }
     
     async def _handle_status_request(self, envelope: MCPEnvelope) -> Dict[str, Any]:

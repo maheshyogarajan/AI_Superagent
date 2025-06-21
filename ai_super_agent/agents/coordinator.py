@@ -1,6 +1,8 @@
 """Coordinator agent for managing and routing tasks."""
 
 import logging
+import os
+from datetime import datetime
 from typing import Dict, Any
 from ai_super_agent.agents.base import BaseAgent
 from ai_super_agent.models.mcp import MCPEnvelope
@@ -68,6 +70,33 @@ class CoordinatorAgent(BaseAgent):
         
         logger.info(f"Coordinating task: {instruction[:100]}...")
         
+        # Create workings file for task documentation
+        task_id = envelope.task_id
+        workings_dir = "data/workings"
+        os.makedirs(workings_dir, exist_ok=True)
+        
+        workings_file = f"{workings_dir}/{task_id}.md"
+        initial_content = f"""# Task Workings - {task_id}
+
+**Started:** {datetime.now().isoformat()}
+**Instruction:** {instruction}
+
+## Coordinator Analysis
+Task received and being processed by the coordination system.
+
+--- STEP BREAK ---
+
+## Agent Routing
+Analyzing instruction to determine optimal agent assignment...
+"""
+        
+        try:
+            with open(workings_file, 'w') as f:
+                f.write(initial_content)
+            logger.info(f"Created workings file: {workings_file}")
+        except Exception as e:
+            logger.error(f"Failed to create workings file: {e}")
+        
         # Simple routing logic - for now, route research tasks to research agent
         if any(keyword in instruction.lower() for keyword in ["research", "find", "search", "analyze"]):
             target_agent = "research"
@@ -92,6 +121,23 @@ class CoordinatorAgent(BaseAgent):
         # Send task to target agent
         success = await self.send_message(task_envelope)
         
+        # Update workings file with routing decision
+        try:
+            routing_update = f"""
+Target agent selected: **{target_agent}**
+Routing reasoning: Task contains keywords that match {target_agent} agent capabilities.
+
+--- STEP BREAK ---
+
+## Task Execution
+Task has been dispatched to the {target_agent} agent for processing...
+"""
+            with open(workings_file, 'a') as f:
+                f.write(routing_update)
+            logger.info(f"Updated workings file with routing information")
+        except Exception as e:
+            logger.error(f"Failed to update workings file: {e}")
+        
         if success:
             logger.info(f"Task routed to {target_agent} agent")
             return {
@@ -99,7 +145,8 @@ class CoordinatorAgent(BaseAgent):
                 "message": f"Task routed to {target_agent} agent",
                 "target_agent": target_agent,
                 "task_id": task_envelope.id,
-                "agent_id": self.agent_id
+                "agent_id": self.agent_id,
+                "workings_file": workings_file
             }
         else:
             logger.error(f"Failed to route task to {target_agent} agent")
