@@ -299,7 +299,7 @@ Research task successfully completed by {self.agent_id} agent.
             result = response.json()
             content = result["candidates"][0]["content"]["parts"][0]["text"]
             
-            return self._parse_research_response(content, instruction)
+            return self._parse_research_response(content, instruction, context)
     
     def _build_research_prompt(self, instruction: str, context: Dict[str, Any]) -> str:
         """Build research prompt with context and personality."""
@@ -384,6 +384,6 @@ Format your response clearly with these sections."""
                     "openai": settings.openai_enabled,
                     "gemini": settings.gemini_enabled
                 },
-                "context_provided": bool(context)
+                "context_provided": bool(context or {})
             }
         }
