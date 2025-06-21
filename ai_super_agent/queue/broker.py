@@ -84,7 +84,7 @@ async def enqueue(agent_id: str, envelope: MCPEnvelope) -> bool:
         message_json = json.dumps(message_data)
         
         # Push to the right end of the list (FIFO with BLPOP)
-        await client.rpush(queue_key, message_json)
+        client.rpush(queue_key, message_json)
         
         logger.debug(f"Enqueued message {envelope.id} for agent {agent_id}")
         return True
@@ -119,7 +119,7 @@ async def dequeue(agent_id: str, timeout: int = 1) -> Optional[MCPEnvelope]:
         queue_key = f"agent:{agent_id}:queue"
         
         # Block and pop from the left end of the list (FIFO)
-        result = await client.blpop([queue_key], timeout=timeout)
+        result = client.blpop([queue_key], timeout=timeout)
         
         if result is None:
             # Timeout occurred
@@ -135,7 +135,7 @@ async def dequeue(agent_id: str, timeout: int = 1) -> Optional[MCPEnvelope]:
         logger.debug(f"Dequeued message {envelope.id} for agent {agent_id}")
         return envelope
         
-    except asyncio.TimeoutError:
+    except Exception as e:
         # Normal timeout, not an error
         return None
     except Exception as e:
