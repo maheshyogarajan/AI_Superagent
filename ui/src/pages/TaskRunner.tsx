@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Textarea } from '../components/ui/textarea'
@@ -187,17 +187,12 @@ export function TaskRunner() {
                 
                 {taskStatus === 'completed' && (
                   <div className="flex gap-2 pt-2">
-                    <Button size="sm" variant="outline" onClick={handleViewWorkings}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      View Documentation
-                    </Button>
+                    <Link to={`/workings/${currentTaskId}`} className="underline text-primary">
+                      View Workings
+                    </Link>
                     <Button size="sm" variant="outline" onClick={handleDownloadWorkings}>
                       <Download className="h-4 w-4 mr-2" />
                       Download
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={handleViewWorkings}>
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Open in New Tab
                     </Button>
                   </div>
                 )}
