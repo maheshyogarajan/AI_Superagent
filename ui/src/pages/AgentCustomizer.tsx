@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
 import { Badge } from '../components/ui/badge'
-import { AlertCircle, CheckCircle, Settings, User, Zap, Brain, ArrowLeft } from 'lucide-react'
+import { AlertCircle, Settings, User, Edit, Zap, Brain } from 'lucide-react'
 
 interface Agent {
   id: string
@@ -28,40 +27,28 @@ interface Personality {
 }
 
 export default function AgentCustomizer() {
-  const { agentId } = useParams<{ agentId: string }>()
   const navigate = useNavigate()
-  const [agent, setAgent] = useState<Agent | null>(null)
+  const [agents, setAgents] = useState<Agent[]>([])
   const [personalities, setPersonalities] = useState<Personality[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-
-  // Form state
-  const [formData, setFormData] = useState<Partial<Agent>>({})
 
   useEffect(() => {
-    if (agentId) {
-      loadAgent(agentId)
-      loadPersonalities()
-    } else {
-      // If no agentId, redirect to agent list or show agent selection
-      navigate('/agents')
-    }
-  }, [agentId, navigate])
+    loadAgents()
+    loadPersonalities()
+  }, [])
 
-  const loadAgent = async (id: string) => {
+  const loadAgents = async () => {
     try {
-      const response = await fetch(`/api/agents/${id}/config`)
+      const response = await fetch('/api/agents')
       const data = await response.json()
       if (data.status === 'success') {
-        setAgent(data.agent)
-        setFormData(data.agent)
+        setAgents(data.agents)
       } else {
         setError(data.message)
       }
     } catch (err) {
-      setError('Failed to load agent configuration')
+      setError('Failed to load agents')
     }
   }
 
@@ -79,49 +66,8 @@ export default function AgentCustomizer() {
     }
   }
 
-  const handleAgentSelect = (agent: Agent) => {
-    setSelectedAgent(agent)
-    setFormData(agent)
-    setError(null)
-    setSuccess(null)
-  }
-
-  const handleInputChange = (field: keyof Agent, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
-  }
-
-  const handleSave = async () => {
-    if (!agent || !agentId) return
-
-    setIsSaving(true)
-    setError(null)
-    setSuccess(null)
-
-    try {
-      const response = await fetch(`/api/agents/${agentId}/config`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      })
-
-      const data = await response.json()
-      if (data.status === 'success') {
-        setSuccess('Agent configuration updated successfully')
-        setAgent(data.agent)
-        setFormData(data.agent)
-      } else {
-        setError(data.message)
-      }
-    } catch (err) {
-      setError('Failed to save agent configuration')
-    } finally {
-      setIsSaving(false)
-    }
+  const handleEditAgent = (agentId: string) => {
+    navigate(`/agents/${agentId}/edit`)
   }
 
   const getPersonalityName = (personalityId: string) => {
@@ -153,35 +99,56 @@ export default function AgentCustomizer() {
         <h1 className="text-3xl font-bold">Agent Customizer</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Agent Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <User className="h-5 w-5" />
-              <span>Agents</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {agents.map((agent) => (
-              <div
-                key={agent.id}
-                className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                  selectedAgent?.id === agent.id 
-                    ? 'border-blue-500 bg-blue-50' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                onClick={() => handleAgentSelect(agent)}
-              >
-                <div className="font-medium">{agent.name}</div>
-                <div className="text-sm text-gray-500">{agent.role}</div>
-                <Badge variant="outline" className="mt-1">
+      {error && (
+        <div className="flex items-center space-x-2 text-red-600 bg-red-50 p-3 rounded-lg">
+          <AlertCircle className="h-4 w-4" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {agents.map((agent) => (
+          <Card key={agent.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <User className="h-5 w-5" />
+                  <span>{agent.name}</span>
+                </div>
+                <Badge variant="outline">
                   {getPersonalityName(agent.personality_id)}
                 </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-sm text-gray-600">{agent.role}</div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Temperature Cap:</span>
+                  <span className="font-medium">{agent.temperature_cap.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Risk Bias:</span>
+                  <span className="font-medium">{agent.risk_bias.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Model:</span>
+                  <span className="font-medium">{agent.default_model}</span>
+                </div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
+
+              <Button 
+                onClick={() => handleEditAgent(agent.id)}
+                className="w-full"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Configure Agent
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
         {/* Agent Configuration */}
         <div className="lg:col-span-2">
