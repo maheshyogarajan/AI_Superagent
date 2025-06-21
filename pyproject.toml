@@ -17,4 +17,6 @@ dependencies = [
     "orjson>=3.10.18",
     "aiofiles>=24.1.0",
     "rich>=14.0.0",
+    "alembic>=1.16.2",
+    "asyncpg>=0.30.0",
 ]
