@@ -5,7 +5,8 @@ import { Button } from '../components/ui/button'
 import { Textarea } from '../components/ui/textarea'
 import { Badge } from '../components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { Play, Square, FileText, Download, ExternalLink } from 'lucide-react'
+import { Play, Square, FileText, Download, ExternalLink, Eye } from 'lucide-react'
+import { PlanDrawer } from '../components/PlanDrawer'
 
 export function TaskRunner() {
   const navigate = useNavigate()
@@ -15,6 +16,7 @@ export function TaskRunner() {
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null)
   const [taskStatus, setTaskStatus] = useState<string>('')
   const [logs, setLogs] = useState<string[]>([])
+  const [planId, setPlanId] = useState<string | null>(null)
 
   const taskExamples = [
     "Research the latest developments in artificial intelligence for 2024",
@@ -22,6 +24,33 @@ export function TaskRunner() {
     "Evaluate competitive landscape for fintech startups",
     "Study consumer behavior patterns in e-commerce"
   ]
+
+  const handlePreviewPlan = async () => {
+    if (!instruction.trim()) return
+
+    try {
+      setLogs(['Creating execution plan...'])
+      
+      const response = await fetch('/api/plan/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instruction
+        })
+      })
+
+      const result = await response.json()
+      
+      if (result.status === 'success') {
+        setPlanId(result.plan.plan_id)
+        setLogs(prev => [...prev, `Plan created: ${result.plan.plan_id}`])
+      } else {
+        throw new Error(result.message || 'Plan creation failed')
+      }
+    } catch (error) {
+      setLogs(prev => [...prev, `Error creating plan: ${error instanceof Error ? error.message : 'Unknown error'}`])
+    }
+  }
 
   const handleSubmitTask = async () => {
     if (!instruction.trim() || isRunning) return
@@ -123,23 +152,35 @@ export function TaskRunner() {
                 </Select>
               </div>
 
-              <Button 
-                onClick={handleSubmitTask} 
-                disabled={!instruction.trim() || isRunning}
-                className="w-full"
-              >
-                {isRunning ? (
-                  <>
-                    <Square className="h-4 w-4 mr-2" />
-                    Running...
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 mr-2" />
-                    Execute Task
-                  </>
-                )}
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handlePreviewPlan} 
+                  disabled={!instruction.trim()}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Preview Plan
+                </Button>
+                
+                <Button 
+                  onClick={handleSubmitTask} 
+                  disabled={!instruction.trim() || isRunning}
+                  className="flex-1"
+                >
+                  {isRunning ? (
+                    <>
+                      <Square className="h-4 w-4 mr-2" />
+                      Running...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 mr-2" />
+                      Execute Task
+                    </>
+                  )}
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

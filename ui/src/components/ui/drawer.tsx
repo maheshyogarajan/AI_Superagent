@@ -1,30 +1,38 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from './card';
+import { Button } from './button';
+import { X } from 'lucide-react';
 
 interface DrawerProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  title: string;
+  isOpen: boolean;
+  onClose?: () => void;
   children: React.ReactNode;
 }
 
-export function Drawer({ open, onOpenChange, children }: DrawerProps) {
-  if (!open) return null;
+export function Drawer({ title, isOpen, onClose, children }: DrawerProps) {
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
-      {/* Overlay */}
-      <div 
-        className="fixed inset-0 bg-black/80" 
-        onClick={() => onOpenChange(false)}
-      />
-      
-      {/* Drawer Content */}
-      <div className="fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto max-h-[80vh] flex-col rounded-t-[10px] border bg-background">
-        <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
-        <div className="flex-1 overflow-auto">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-4xl max-h-[80vh] overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="overflow-y-auto max-h-[calc(80vh-100px)]">
           {children}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
