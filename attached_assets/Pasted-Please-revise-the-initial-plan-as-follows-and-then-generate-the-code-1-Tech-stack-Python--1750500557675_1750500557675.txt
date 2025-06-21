@@ -1,0 +1,43 @@
+Please revise the initial plan as follows and then generate the code:
+
+1. Tech stack
+   • Python 3.11  
+   • Flask + flask-asyncio (async support)  
+   • redis.asyncio client (we will point to an Upstash Redis URL in .env)  
+   • pydantic + python-dotenv  
+   • No Celery or RQ – we will implement a simple Redis list queue ourselves.
+
+2. Project structure (exact paths):
+   ai_super_agent/
+     ├─ agents/
+     │    ├─ __init__.py
+     │    ├─ base.py               # BaseAgent class
+     │    ├─ coordinator.py        # CoordinatorAgent
+     │    └─ research.py           # ResearchAgent (stub)
+     ├─ queue/
+     │    ├─ __init__.py
+     │    └─ broker.py             # enqueue / dequeue helpers
+     ├─ models/
+     │    ├─ __init__.py
+     │    └─ mcp.py                # MCPEnvelope Pydantic model (use the JSON spec I gave)
+     ├─ config.py                  # loads settings from .env
+     ├─ api.py                     # Flask Blueprint with POST /task
+     ├─ app.py                     # starts Flask in a thread + asyncio agent loop
+     └─ __init__.py
+
+3. Important files to generate
+   • .env  (include REDIS_URL, OPENAI_ENABLED, GEMINI_ENABLED placeholders)
+   • replit.nix  (python311 + pip)
+   • .replit  (run = "python ai_super_agent/app.py")
+   • requirements.txt  (same libs listed above)
+
+4. Key code behaviours
+   • broker.enqueue / broker.dequeue use redis.rpush / blpop.
+   • BaseAgent.listen() awaits dequeue(self.agent_id) and calls handle().
+   • ResearchAgent.handle() should return a dummy success result (no LLM yet).
+   • api.py: POST /task accepts JSON {instruction, recipient?} and pushes an MCPEnvelope to that agent’s queue.
+   • app.py: starts Flask on port 5000 via werkzeug.run_simple in a daemon thread, then launches asyncio.gather with CoordinatorAgent and ResearchAgent listeners.
+
+5. Do **not** add any HTML templates or front-end yet—CLI and cURL tests only.
+
+After generating files, automatically run `python ai_super_agent/app.py` so I can test POST /task.
