@@ -6,7 +6,6 @@ import logging
 import asyncio
 import threading
 from flask import Flask
-from flask_asyncio import AsyncFlask
 from werkzeug.serving import run_simple
 
 # Add the parent directory to sys.path so imports work
@@ -28,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 def create_flask_app() -> Flask:
     """Create and configure the Flask application."""
-    app = AsyncFlask(__name__)
+    app = Flask(__name__)
     app.secret_key = settings.session_secret
     
     # Register API blueprint

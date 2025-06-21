@@ -2,7 +2,7 @@
 
 import os
 from typing import Optional
-from pydantic import BaseSettings, Field
+from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -13,24 +13,25 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
     # Redis Configuration
-    redis_url: str = Field(default="redis://localhost:6379", env="REDIS_URL")
+    redis_url: str = "redis://localhost:6379"
     
     # LLM Provider Configuration
-    openai_enabled: bool = Field(default=False, env="OPENAI_ENABLED")
-    gemini_enabled: bool = Field(default=False, env="GEMINI_ENABLED")
-    openai_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
-    gemini_api_key: Optional[str] = Field(default=None, env="GEMINI_API_KEY")
+    openai_enabled: bool = False
+    gemini_enabled: bool = False
+    openai_api_key: Optional[str] = None
+    gemini_api_key: Optional[str] = None
     
     # Flask Configuration
-    session_secret: str = Field(default="dev-secret-key", env="SESSION_SECRET")
-    flask_debug: bool = Field(default=True, env="FLASK_DEBUG")
+    session_secret: str = "dev-secret-key"
+    flask_debug: bool = True
     
     # Agent Configuration
-    coordinator_queue_timeout: int = Field(default=1, env="COORDINATOR_QUEUE_TIMEOUT")
-    research_queue_timeout: int = Field(default=1, env="RESEARCH_QUEUE_TIMEOUT")
+    coordinator_queue_timeout: int = 1
+    research_queue_timeout: int = 1
     
     class Config:
         env_file = ".env"
+        env_prefix = ""
 
 
 # Global settings instance
