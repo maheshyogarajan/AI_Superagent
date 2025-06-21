@@ -3,7 +3,7 @@
 import logging
 from flask import Blueprint, request, jsonify
 from ai_super_agent.models.mcp import MCPEnvelope
-from ai_super_agent.queue.broker import enqueue
+from ai_super_agent.message_queue.broker import enqueue
 from ai_super_agent.views.kpi import kpi_bp
 from ai_super_agent.views.strategy import strategy_bp
 from ai_super_agent.views.logs import logs_bp
@@ -130,7 +130,7 @@ def get_status():
         JSON response with system status
     """
     try:
-        from ai_super_agent.queue.broker import get_queue_length, get_redis_client
+        from ai_super_agent.message_queue.broker import get_queue_length, get_redis_client
         
         # Check Redis connection
         try:

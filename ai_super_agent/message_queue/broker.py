@@ -14,7 +14,7 @@ _redis_client: Optional[redis.Redis] = None
 _use_memory_fallback = False
 
 # Import memory broker for fallback
-from ai_super_agent.queue.memory_broker import (
+from ai_super_agent.message_queue.memory_broker import (
     enqueue as memory_enqueue,
     dequeue as memory_dequeue,
     get_queue_length as memory_get_queue_length,
@@ -23,7 +23,7 @@ from ai_super_agent.queue.memory_broker import (
 
 # Try simplified broker if available
 try:
-    from ai_super_agent.queue.simple_broker import (
+    from ai_super_agent.message_queue.simple_broker import (
         enqueue as simple_enqueue,
         dequeue as simple_dequeue,
         get_queue_length as simple_get_queue_length,
