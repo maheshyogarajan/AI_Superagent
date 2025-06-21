@@ -15,10 +15,11 @@ class ResearchAgent(BaseAgent):
     Currently returns dummy results as LLM integration is not implemented yet.
     """
     
-    def __init__(self):
+    def __init__(self, personality_id: str = "Default"):
         super().__init__(
             agent_id="research",
-            queue_timeout=settings.research_queue_timeout
+            queue_timeout=settings.research_queue_timeout,
+            personality_id=personality_id
         )
     
     async def handle(self, envelope: MCPEnvelope) -> Dict[str, Any]:
@@ -202,7 +203,7 @@ class ResearchAgent(BaseAgent):
                         {"role": "system", "content": "You are a research assistant. Provide comprehensive, factual research findings."},
                         {"role": "user", "content": prompt}
                     ],
-                    "temperature": 0.7,
+                    "temperature": self.get_personality_temperature(0.7),
                     "max_tokens": 1500
                 },
                 timeout=30.0
@@ -243,16 +244,25 @@ class ResearchAgent(BaseAgent):
             return self._parse_research_response(content, instruction)
     
     def _build_research_prompt(self, instruction: str, context: Dict[str, Any]) -> str:
-        """Build research prompt with context."""
-        prompt = f"Research Task: {instruction}\n\n"
+        """Build research prompt with context and personality."""
+        base_prompt = f"Research Task: {instruction}\n\n"
         
         if context:
-            prompt += "Context:\n"
+            base_prompt += "Context:\n"
             for key, value in context.items():
-                prompt += f"- {key}: {value}\n"
-            prompt += "\n"
+                base_prompt += f"- {key}: {value}\n"
+            base_prompt += "\n"
         
-        prompt += """Please provide:
+        # Add personality-specific guidance
+        if self.personality_id != "Default":
+            decision_prompts = self.personality.get('decision_prompts', [])
+            if decision_prompts:
+                base_prompt += "Consider these key questions from your perspective:\n"
+                for prompt in decision_prompts:
+                    base_prompt += f"- {prompt}\n"
+                base_prompt += "\n"
+        
+        base_prompt += """Please provide:
 1. Key findings (3-5 main points)
 2. A concise summary
 3. Confidence level (0.0-1.0)
@@ -260,7 +270,8 @@ class ResearchAgent(BaseAgent):
 
 Format your response clearly with these sections."""
         
-        return prompt
+        # Apply personality enhancement
+        return self.get_personality_prompt(base_prompt)
     
     def _parse_research_response(self, content: str, instruction: str) -> Dict[str, Any]:
         """Parse LLM response into structured format."""

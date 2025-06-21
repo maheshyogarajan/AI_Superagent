@@ -75,6 +75,10 @@ def submit_task():
         if "scenario_id" in data:
             envelope.scenario_id = data["scenario_id"]
         
+        # Add personality context to envelope if specified
+        if "personality_id" in data:
+            envelope.context["personality"] = data["personality_id"]
+        
         # Enqueue the task synchronously
         import asyncio
         success = asyncio.run(enqueue(recipient, envelope))
