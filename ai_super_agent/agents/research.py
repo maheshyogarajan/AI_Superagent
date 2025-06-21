@@ -271,7 +271,7 @@ Research task successfully completed by {self.agent_id} agent.
             result = response.json()
             content = result["choices"][0]["message"]["content"]
             
-            return self._parse_research_response(content, instruction)
+            return self._parse_research_response(content, instruction, context)
     
     async def _research_with_gemini(self, instruction: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Research using Google Gemini API."""
@@ -331,7 +331,7 @@ Format your response clearly with these sections."""
         # Apply personality enhancement
         return self.get_personality_prompt(base_prompt)
     
-    def _parse_research_response(self, content: str, instruction: str) -> Dict[str, Any]:
+    def _parse_research_response(self, content: str, instruction: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """Parse LLM response into structured format."""
         lines = content.strip().split('\n')
         
