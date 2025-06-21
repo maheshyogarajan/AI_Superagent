@@ -92,7 +92,7 @@ export function PersonalitySelector({ selectedPersonality, onPersonalityChange }
               className={`p-4 border rounded-lg text-left transition-all hover:border-primary/50 ${
                 selectedPersonality === id
                   ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                  : 'border-border hover:bg-accent'
+                  : 'border hover:bg-accent'
               }`}
             >
               <h3 className="font-medium text-sm">{name}</h3>
