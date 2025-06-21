@@ -172,6 +172,26 @@ def health_check():
     }), 200
 
 
+@api_bp.route('/personalities', methods=['GET'])
+def get_personalities():
+    """Get available personality profiles."""
+    try:
+        from ai_super_agent.personalities import get_available_personalities
+        personalities = get_available_personalities()
+        
+        return jsonify({
+            "status": "success",
+            "personalities": personalities,
+            "count": len(personalities)
+        })
+    except Exception as e:
+        logger.error(f"Error retrieving personalities: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
 # Error handlers
 @api_bp.errorhandler(404)
 def not_found(error):
