@@ -66,37 +66,36 @@ class ResearchAgent(BaseAgent):
         
         logger.info(f"Executing research task: {instruction[:100]}...")
         
-        # TODO: Implement actual LLM-based research
-        # For now, return a dummy success result
+        # Add initial progress update
+        envelope.add_progress_update(10, "Starting research task")
         
-        # Simulate some processing time
-        import asyncio
-        await asyncio.sleep(0.1)
+        # Check for simulation specification
+        if envelope.simulation_spec:
+            envelope.add_progress_update(30, "Analyzing simulation parameters")
+            logger.info(f"Processing simulation with players: {envelope.simulation_spec.players}")
         
-        # Generate dummy research result
-        research_result = {
-            "task_completed": True,
-            "instruction": instruction,
-            "findings": [
-                "This is a dummy research finding #1",
-                "This is a dummy research finding #2",
-                "This is a dummy research finding #3"
-            ],
-            "summary": f"Research completed for: {instruction[:50]}...",
-            "confidence": 0.85,
-            "sources": [
-                "dummy_source_1",
-                "dummy_source_2"
-            ],
-            "metadata": {
-                "processing_time": "0.1s",
-                "llm_enabled": {
-                    "openai": settings.openai_enabled,
-                    "gemini": settings.gemini_enabled
-                },
-                "context_provided": bool(context)
-            }
-        }
+        # Check risk profile
+        if envelope.risk_profile:
+            envelope.add_progress_update(50, "Assessing risk factors")
+            logger.info(f"Risk profile - Regulatory: {envelope.risk_profile.regulatory}, Competitive: {envelope.risk_profile.competitive}")
+        
+        # Perform actual LLM research
+        envelope.add_progress_update(70, "Conducting LLM research")
+        research_result = await self._perform_llm_research(instruction, context)
+        
+        # Add final progress update
+        envelope.add_progress_update(100, "Research completed")
+        
+        # Set quality scores
+        self_quality = 0.9 if research_result.get("provider") in ["openai", "gemini"] else 0.7
+        envelope.set_quality_score(self_score=self_quality, coordinator_score=0.85)
+        
+        # Set task result
+        envelope.set_result(
+            status="success",
+            message="Research task completed successfully",
+            data=research_result
+        )
         
         logger.info(f"Research task completed successfully")
         
