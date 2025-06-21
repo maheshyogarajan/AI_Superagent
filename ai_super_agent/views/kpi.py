@@ -23,17 +23,15 @@ def get_kpis():
         - Processing success rate
     """
     try:
-        broker = get_broker()
-        
-        # Get queue depths
-        coordinator_queue_depth = asyncio.run(broker.queue_depth("coordinator"))
-        research_queue_depth = asyncio.run(broker.queue_depth("research"))
+        # Get queue depths using the broker functions
+        coordinator_queue_depth = asyncio.run(get_queue_length("coordinator"))
+        research_queue_depth = asyncio.run(get_queue_length("research"))
         
         # Calculate total queue depth
         total_queue_depth = coordinator_queue_depth + research_queue_depth
         
         # Get Redis connection status
-        redis_status = "Connected" if hasattr(broker, 'redis') and broker.redis else "Memory Fallback"
+        redis_status = "Memory Fallback" if not settings.redis_url else "Connected"
         
         # System status indicators
         active_agents = ["coordinator", "research"]
@@ -115,11 +113,9 @@ def get_detailed_kpis():
         JSON response with detailed metrics including performance data
     """
     try:
-        broker = get_broker()
-        
-        # Get queue information
-        coordinator_depth = asyncio.run(broker.queue_depth("coordinator"))
-        research_depth = asyncio.run(broker.queue_depth("research"))
+        # Get queue information using broker functions
+        coordinator_depth = asyncio.run(get_queue_length("coordinator"))
+        research_depth = asyncio.run(get_queue_length("research"))
         
         # System configuration
         config_info = {
