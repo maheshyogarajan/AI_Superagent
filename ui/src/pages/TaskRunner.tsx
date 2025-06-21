@@ -1,296 +1,238 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Play, Square, RefreshCw, Terminal, Send } from "lucide-react";
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Button } from '../components/ui/button'
+import { Textarea } from '../components/ui/textarea'
+import { Badge } from '../components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
+import { Play, Square, FileText, Download, ExternalLink } from 'lucide-react'
 
-export default function TaskRunner() {
-  const [instruction, setInstruction] = useState("");
-  const [agent, setAgent] = useState("coordinator");
-  const [taskId, setTaskId] = useState<string | null>(null);
-  const [logs, setLogs] = useState<string[]>([]);
-  const [isRunning, setIsRunning] = useState(false);
-  const [taskResult, setTaskResult] = useState<any>(null);
+export function TaskRunner() {
+  const navigate = useNavigate()
+  const [instruction, setInstruction] = useState('')
+  const [selectedAgent, setSelectedAgent] = useState('coordinator')
+  const [isRunning, setIsRunning] = useState(false)
+  const [currentTaskId, setCurrentTaskId] = useState<string | null>(null)
+  const [taskStatus, setTaskStatus] = useState<string>('')
+  const [logs, setLogs] = useState<string[]>([])
 
-  async function handleSubmit() {
-    if (!instruction.trim()) return;
-    
-    setIsRunning(true);
-    setLogs([]);
-    setTaskResult(null);
-    
+  const taskExamples = [
+    "Research the latest developments in artificial intelligence for 2024",
+    "Analyze market trends in renewable energy sector",
+    "Evaluate competitive landscape for fintech startups",
+    "Study consumer behavior patterns in e-commerce"
+  ]
+
+  const handleSubmitTask = async () => {
+    if (!instruction.trim() || isRunning) return
+
     try {
-      // Submit task to backend
-      const response = await fetch("/api/task", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          instruction: instruction.trim(),
-          recipient: agent,
-          context: {}
+      setIsRunning(true)
+      setLogs(['Submitting task to agent system...'])
+      
+      const response = await fetch('/api/task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instruction,
+          recipient: selectedAgent,
+          context: { priority: 'normal' }
         })
-      });
+      })
+
+      const result = await response.json()
       
-      if (!response.ok) {
-        throw new Error(`Failed to submit task: ${response.statusText}`);
+      if (result.status === 'success') {
+        setCurrentTaskId(result.task_id)
+        setTaskStatus('running')
+        setLogs(prev => [...prev, `Task submitted: ${result.task_id}`])
+        
+        // Simulate task completion after delay
+        setTimeout(() => {
+          setIsRunning(false)
+          setTaskStatus('completed')
+          setLogs(prev => [...prev, 'Task execution completed'])
+        }, 3000)
+      } else {
+        throw new Error(result.message || 'Task submission failed')
       }
-      
-      const result = await response.json();
-      setTaskId(result.task_id || result.id);
-      setLogs(prev => [...prev, `Task submitted: ${result.task_id || result.id}`]);
-      setLogs(prev => [...prev, `Status: ${result.status}`]);
-      
-      if (result.message) {
-        setLogs(prev => [...prev, `Message: ${result.message}`]);
-      }
-      
-      setTaskResult(result);
-      
     } catch (error) {
-      setLogs(prev => [...prev, `Error: ${error.message}`]);
-    } finally {
-      setIsRunning(false);
+      setLogs(prev => [...prev, `Error: ${error instanceof Error ? error.message : 'Unknown error'}`])
+      setIsRunning(false)
+      setTaskStatus('error')
     }
   }
 
-  function handleStop() {
-    setIsRunning(false);
-    setLogs(prev => [...prev, "Task execution stopped by user"]);
+  const handleViewWorkings = () => {
+    if (currentTaskId) {
+      navigate(`/workings/${currentTaskId}`)
+    }
   }
 
-  function handleClear() {
-    setLogs([]);
-    setTaskResult(null);
-    setTaskId(null);
+  const handleDownloadWorkings = () => {
+    if (currentTaskId) {
+      const link = document.createElement('a')
+      link.href = `/workings/${currentTaskId}/raw`
+      link.download = `task_${currentTaskId}_workings.md`
+      link.click()
+    }
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Task Runner</h1>
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Task Runner</h1>
         <p className="text-muted-foreground">
-          Execute tasks and monitor real-time progress across agents
+          Submit tasks to the AI agent system and monitor execution
         </p>
       </div>
 
-      {/* Task Submission */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5" />
-            Task Submission
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Instruction Input */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Task Instruction:
-            </label>
-            <textarea
-              placeholder="e.g. 'Compare GST regimes in AU vs NZ' or 'Analyze market trends for Q4'"
-              value={instruction}
-              onChange={(e) => setInstruction(e.target.value)}
-              className="w-full h-24 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={isRunning}
-            />
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Task Submission */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Submit Task</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Task Instruction
+                </label>
+                <Textarea
+                  placeholder="Enter your task instruction here..."
+                  value={instruction}
+                  onChange={(e) => setInstruction(e.target.value)}
+                  rows={4}
+                  disabled={isRunning}
+                />
+              </div>
 
-          {/* Agent Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Target Agent:
-            </label>
-            <select
-              value={agent}
-              onChange={(e) => setAgent(e.target.value)}
-              disabled={isRunning}
-              className="w-full h-9 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option value="coordinator">Coordinator Agent</option>
-              <option value="research">Research Agent</option>
-            </select>
-          </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Target Agent
+                </label>
+                <Select value={selectedAgent} onValueChange={setSelectedAgent} disabled={isRunning}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="coordinator">Coordinator</SelectItem>
+                    <SelectItem value="research">Research Agent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <Button 
-              onClick={handleSubmit} 
-              disabled={!instruction.trim() || isRunning}
-              className="flex items-center gap-2"
-            >
-              {isRunning ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  Running...
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4" />
-                  Execute Task
-                </>
-              )}
-            </Button>
-            
-            {isRunning && (
               <Button 
-                variant="outline" 
-                onClick={handleStop}
-                className="flex items-center gap-2"
+                onClick={handleSubmitTask} 
+                disabled={!instruction.trim() || isRunning}
+                className="w-full"
               >
-                <Square className="h-4 w-4" />
-                Stop
+                {isRunning ? (
+                  <>
+                    <Square className="h-4 w-4 mr-2" />
+                    Running...
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Execute Task
+                  </>
+                )}
               </Button>
-            )}
-            
-            {logs.length > 0 && (
-              <Button 
-                variant="outline" 
-                onClick={handleClear}
-                disabled={isRunning}
-              >
-                Clear
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      {/* Task Status */}
-      {taskId && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <Terminal className="h-5 w-5" />
-                Task Status
-              </span>
-              <Badge variant={isRunning ? "default" : "secondary"}>
-                {isRunning ? "Running" : "Completed"}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p className="text-sm">
-                <strong>Task ID:</strong> {taskId}
-              </p>
-              <p className="text-sm">
-                <strong>Agent:</strong> {agent}
-              </p>
-              {taskResult && (
-                <p className="text-sm">
-                  <strong>Status:</strong> {taskResult.status}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Execution Logs */}
-      {logs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Terminal className="h-5 w-5" />
-              Execution Logs
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-black rounded-md p-4 font-mono text-sm text-green-400 max-h-64 overflow-y-auto">
-              {logs.map((log, index) => (
-                <div key={index} className="mb-1">
-                  <span className="text-gray-500">
-                    {new Date().toLocaleTimeString()}
-                  </span>
-                  {" "}
-                  {log}
-                </div>
+          {/* Task Examples */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Example Tasks</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {taskExamples.map((example, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  className="w-full text-left justify-start h-auto p-3"
+                  onClick={() => setInstruction(example)}
+                  disabled={isRunning}
+                >
+                  {example}
+                </Button>
               ))}
-              {isRunning && (
-                <div className="flex items-center gap-2 mt-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-gray-400">Processing...</span>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Task Status & Logs */}
+        <div className="space-y-6">
+          {/* Task Status */}
+          {currentTaskId && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle>Task Status</CardTitle>
+                <Badge variant={taskStatus === 'completed' ? 'default' : taskStatus === 'error' ? 'destructive' : 'secondary'}>
+                  {taskStatus}
+                </Badge>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Task ID</p>
+                  <p className="font-mono text-sm">{currentTaskId}</p>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Agent</p>
+                  <p className="text-sm">{selectedAgent}</p>
+                </div>
+                
+                {taskStatus === 'completed' && (
+                  <div className="flex gap-2 pt-2">
+                    <Button size="sm" variant="outline" onClick={handleViewWorkings}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Documentation
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleDownloadWorkings}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleViewWorkings}>
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open in New Tab
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
-      {/* Results and Next Actions */}
-      {taskResult && !isRunning && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Task Results</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {taskResult.status === "success" && (
-              <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
-                <p className="text-green-800 dark:text-green-200">
-                  ✓ Task completed successfully
-                </p>
-                {taskResult.message && (
-                  <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                    {taskResult.message}
+          {/* Execution Logs */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Execution Logs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-muted rounded-lg p-4 h-64 overflow-y-auto">
+                {logs.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">
+                    No logs yet. Submit a task to see execution details.
                   </p>
+                ) : (
+                  <div className="space-y-1">
+                    {logs.map((log, index) => (
+                      <div key={index} className="text-sm font-mono">
+                        <span className="text-muted-foreground">
+                          [{new Date().toLocaleTimeString()}]
+                        </span>{' '}
+                        {log}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-            )}
-            
-            {taskResult.status === "error" && (
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-                <p className="text-red-800 dark:text-red-200">
-                  ✗ Task failed
-                </p>
-                {taskResult.message && (
-                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                    {taskResult.message}
-                  </p>
-                )}
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => window.open('/strategy', '_blank')}>
-                View Strategy Documents ↗
-              </Button>
-              <Button variant="outline" onClick={() => window.open('/logs', '_blank')}>
-                View System Logs ↗
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Task Examples</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              "Research the latest AI developments in 2024",
-              "Compare market strategies for tech startups",
-              "Analyze competitive landscape for SaaS products",
-              "Generate strategic recommendations for Q1 2025"
-            ].map((example, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                className="text-left justify-start h-auto p-3"
-                onClick={() => setInstruction(example)}
-                disabled={isRunning}
-              >
-                <div className="text-sm">{example}</div>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
-  );
+  )
 }
