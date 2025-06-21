@@ -5,7 +5,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
 from ai_super_agent.models.mcp import MCPEnvelope
-from ai_super_agent.queue.broker import dequeue, enqueue
+from ai_super_agent.message_queue.broker import dequeue, enqueue
 
 logger = logging.getLogger(__name__)
 

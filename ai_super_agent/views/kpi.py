@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, jsonify
 from typing import List, Dict, Any
 
-from ai_super_agent.queue.broker import get_queue_length
+from ai_super_agent.message_queue.broker import get_queue_length
 from ai_super_agent.config import settings
 
 kpi_bp = Blueprint('kpi', __name__)
