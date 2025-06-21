@@ -5,14 +5,16 @@ from flask import Blueprint, request, jsonify
 from ai_super_agent.models.mcp import MCPEnvelope
 from ai_super_agent.queue.broker import enqueue
 from ai_super_agent.views.kpi import kpi_bp
+from ai_super_agent.views.strategy import strategy_bp
 
 logger = logging.getLogger(__name__)
 
 # Create Flask blueprint
 api_bp = Blueprint('api', __name__)
 
-# Register KPI routes
+# Register sub-blueprints
 api_bp.register_blueprint(kpi_bp)
+api_bp.register_blueprint(strategy_bp)
 
 
 @api_bp.route('/task', methods=['POST'])
