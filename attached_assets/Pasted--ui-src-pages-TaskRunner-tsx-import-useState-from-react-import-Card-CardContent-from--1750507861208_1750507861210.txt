@@ -1,0 +1,65 @@
+// ui/src/pages/TaskRunner.tsx
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectItem } from "@/components/ui/select";
+
+export default function TaskRunner() {
+  const [instruction, setInstruction] = useState("");
+  const [agent, setAgent] = useState("Coordinator");
+  const [taskId, setTaskId] = useState<string | null>(null);
+  const [logs, setLogs] = useState<string[]>([]);
+
+  async function handleSubmit() {
+    const res = await fetch("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ instruction, agent })
+    });
+    const { task_id } = await res.json();
+    setTaskId(task_id);
+
+    // Stream progress via SSE
+    const es = new EventSource(`/api/tasks/${task_id}/events`);
+    es.onmessage = (evt) => setLogs((l) => [...l, evt.data]);
+  }
+
+  return (
+    <div className="p-6 space-y-6 max-w-2xl">
+      <Card>
+        <CardContent className="space-y-4">
+          <Textarea
+            placeholder="e.g. ‘Compare GST regimes in AU vs NZ’"
+            value={instruction}
+            onChange={(e) => setInstruction(e.target.value)}
+          />
+          <Select value={agent} onValueChange={setAgent}>
+            <SelectItem value="Coordinator">Coordinator</SelectItem>
+            <SelectItem value="ResearchAgent">ResearchAgent</SelectItem>
+            <SelectItem value="GameTheoryAgent">GameTheoryAgent</SelectItem>
+          </Select>
+          <Button onClick={handleSubmit} disabled={!instruction.trim()}>
+            Dispatch Task
+          </Button>
+        </CardContent>
+      </Card>
+
+      {taskId && (
+        <Card>
+          <CardContent className="space-y-2 overflow-y-auto h-64 text-sm font-mono bg-black/90 text-green-400">
+            {logs.map((l, i) => (
+              <div key={i}>{l}</div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {taskId && (
+        <Button variant="link" className="text-base" href="/strategy?latest">
+          Open Latest Strategy Version ↗
+        </Button>
+      )}
+    </div>
+  );
+}
