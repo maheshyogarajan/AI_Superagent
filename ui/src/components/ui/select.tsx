@@ -1,90 +1,94 @@
-import * as React from "react"
-import { ChevronDown } from "lucide-react"
-import { cn } from "@/lib/utils"
+import React, { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
-export interface SelectProps {
-  value?: string
-  onValueChange?: (value: string) => void
-  placeholder?: string
-  children: React.ReactNode
-  className?: string
+interface SelectProps {
+  children: React.ReactNode;
+  value?: string;
+  onValueChange?: (value: string) => void;
+  disabled?: boolean;
 }
 
-export function Select({ value, onValueChange, placeholder, children, className }: SelectProps) {
-  const [isOpen, setIsOpen] = React.useState(false)
-  const [selectedValue, setSelectedValue] = React.useState(value || '')
+interface SelectItemProps {
+  value: string;
+  children: React.ReactNode;
+}
 
-  React.useEffect(() => {
-    if (value !== undefined) {
-      setSelectedValue(value)
-    }
-  }, [value])
+export function Select({ children, value = '', onValueChange, disabled = false }: SelectProps) {
+  const [selectedValue, setSelectedValue] = useState(value);
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleSelect = (newValue: string) => {
-    setSelectedValue(newValue)
-    onValueChange?.(newValue)
-    setIsOpen(false)
-  }
+    setSelectedValue(newValue);
+    onValueChange?.(newValue);
+    setIsOpen(false);
+  };
 
-  const selectedChild = React.Children.toArray(children).find((child) => {
-    if (React.isValidElement(child) && child.props.value === selectedValue) {
-      return child
+  React.useEffect(() => {
+    setSelectedValue(value);
+  }, [value]);
+
+  // Find the selected item's display text
+  let selectedText = "Select...";
+  React.Children.forEach(children, (child) => {
+    if (React.isValidElement(child) && child.type === SelectItem) {
+      const itemProps = child.props as SelectItemProps;
+      if (itemProps.value === selectedValue) {
+        selectedText = String(itemProps.children);
+      }
     }
-  }) as React.ReactElement | undefined
+  });
 
   return (
-    <div className={cn("relative", className)}>
+    <div className="relative">
       <button
         type="button"
-        className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-        onClick={() => setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={cn(
+          "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+          disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+        )}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
       >
-        <span className={selectedValue ? "" : "text-muted-foreground"}>
-          {selectedChild?.props?.children || placeholder || "Select..."}
-        </span>
-        <ChevronDown className={cn("h-4 w-4 opacity-50 transition-transform", isOpen && "rotate-180")} />
+        <span className="block truncate">{selectedText}</span>
+        <ChevronDown className="h-4 w-4 opacity-50" />
       </button>
       
-      {isOpen && (
-        <div className="absolute top-full z-50 mt-1 w-full rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full rounded-md border bg-popover text-popover-foreground shadow-md mt-1">
           {React.Children.map(children, (child) => {
-            if (React.isValidElement(child)) {
-              return React.cloneElement(child, {
-                onClick: () => handleSelect(child.props.value),
-                className: cn(
-                  "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-                  child.props.className
-                )
-              })
+            if (React.isValidElement(child) && child.type === SelectItem) {
+              const itemProps = child.props as SelectItemProps;
+              return (
+                <div
+                  key={itemProps.value}
+                  className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => handleSelect(itemProps.value)}
+                >
+                  {itemProps.children}
+                </div>
+              );
             }
+            return child;
           })}
         </div>
       )}
-      
-      {isOpen && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setIsOpen(false)}
-        />
-      )}
     </div>
-  )
+  );
 }
 
-export interface SelectItemProps {
-  value: string
-  children: React.ReactNode
-  onClick?: () => void
-  className?: string
+export function SelectTrigger({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
 }
 
-export function SelectItem({ children, onClick, className }: SelectItemProps) {
-  return (
-    <div
-      onClick={onClick}
-      className={className}
-    >
-      {children}
-    </div>
-  )
+export function SelectValue({ placeholder }: { placeholder?: string }) {
+  return <></>;
+}
+
+export function SelectContent({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
+
+export function SelectItem({ value, children }: SelectItemProps) {
+  return <div data-value={value}>{children}</div>;
 }
