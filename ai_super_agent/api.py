@@ -8,6 +8,7 @@ from ai_super_agent.views.kpi import kpi_bp
 from ai_super_agent.views.strategy import strategy_bp
 from ai_super_agent.views.logs import logs_bp
 from ai_super_agent.views.agents import agents_bp
+from ai_super_agent.views.workings import workings_bp
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ api_bp.register_blueprint(kpi_bp)
 api_bp.register_blueprint(strategy_bp)
 api_bp.register_blueprint(logs_bp)
 api_bp.register_blueprint(agents_bp)
+api_bp.register_blueprint(workings_bp)
 
 
 @api_bp.route('/task', methods=['POST'])
