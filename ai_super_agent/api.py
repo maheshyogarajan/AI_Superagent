@@ -45,17 +45,35 @@ def submit_task():
         recipient = data.get('recipient', 'coordinator')  # Default to coordinator
         context = data.get('context', {})
         
-        # Create MCP envelope
+        # Create enhanced MCP envelope
         envelope = MCPEnvelope(
+            sender="api",
+            recipient=recipient,
+            instruction=instruction,
+            context=context,
+            parameters=data.get("parameters", {}),
             method="task",
             params={
                 "instruction": instruction,
                 "context": context
-            },
-            recipient=recipient,
-            instruction=instruction,
-            context=context
+            }
         )
+        
+        # Add simulation spec if provided
+        if "simulation_spec" in data:
+            from ai_super_agent.models.mcp import SimulationSpec
+            envelope.simulation_spec = SimulationSpec(**data["simulation_spec"])
+        
+        # Add risk profile if provided
+        if "risk_profile" in data:
+            from ai_super_agent.models.mcp import RiskProfile
+            envelope.risk_profile = RiskProfile(**data["risk_profile"])
+        
+        # Set parent task and scenario if provided
+        if "parent_task_id" in data:
+            envelope.parent_task_id = data["parent_task_id"]
+        if "scenario_id" in data:
+            envelope.scenario_id = data["scenario_id"]
         
         # Enqueue the task synchronously
         import asyncio
@@ -66,7 +84,8 @@ def submit_task():
             return jsonify({
                 "status": "success",
                 "message": f"Task submitted to {recipient}",
-                "task_id": envelope.id,
+                "task_id": envelope.task_id,
+                "envelope_id": envelope.id,
                 "recipient": recipient
             }), 200
         else:
