@@ -1,5 +1,6 @@
 """Flask API blueprint for AI Super Agent."""
 
+import asyncio
 import logging
 from flask import Blueprint, request, jsonify
 from ai_super_agent.models.mcp import MCPEnvelope
@@ -9,14 +10,17 @@ from ai_super_agent.views.strategy import strategy_bp
 from ai_super_agent.views.logs import logs_bp
 from ai_super_agent.views.agents import agents_bp
 from ai_super_agent.services.plan_inspector import PlanInspector
+from ai_super_agent.repos.agent_repository import AgentRepository, PersonalityRepository
 
 logger = logging.getLogger(__name__)
 
 # Create Flask blueprint
 api_bp = Blueprint('api', __name__)
 
-# Initialize Plan Inspector
+# Initialize services
 plan_inspector = PlanInspector()
+agent_repo = AgentRepository()
+personality_repo = PersonalityRepository()
 
 # Register sub-blueprints
 api_bp.register_blueprint(kpi_bp)
@@ -408,6 +412,164 @@ def list_plans():
         return jsonify({
             "status": "error",
             "message": f"Failed to list plans: {str(e)}"
+        }), 500
+
+
+# Agent Configuration Routes
+@api_bp.route('/agents', methods=['GET'])
+def get_all_agents():
+    """Get all agent configurations."""
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        agents = loop.run_until_complete(agent_repo.get_all_agents())
+        loop.close()
+        
+        return jsonify({
+            "status": "success",
+            "agents": agents
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error retrieving agents: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to retrieve agents: {str(e)}"
+        }), 500
+
+
+@api_bp.route('/agents/<agent_id>/config', methods=['GET'])
+def get_agent_config(agent_id):
+    """Get a specific agent's configuration."""
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        agent = loop.run_until_complete(agent_repo.get_agent_by_id(agent_id))
+        loop.close()
+        
+        if not agent:
+            return jsonify({
+                "status": "error",
+                "message": "Agent not found"
+            }), 404
+        
+        return jsonify({
+            "status": "success",
+            "agent": agent
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error retrieving agent config: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to retrieve agent config: {str(e)}"
+        }), 500
+
+
+@api_bp.route('/agents/<agent_id>/config', methods=['PATCH'])
+def update_agent_config(agent_id):
+    """Update an agent's configuration."""
+    try:
+        payload = request.get_json()
+        if not payload:
+            return jsonify({
+                "status": "error",
+                "message": "No data provided"
+            }), 400
+        
+        # Validate allowed fields
+        allowed_fields = ["personality_id", "temperature_cap", "risk_bias", "default_model", "name", "role"]
+        filtered_data = {k: v for k, v in payload.items() if k in allowed_fields}
+        
+        if not filtered_data:
+            return jsonify({
+                "status": "error",
+                "message": "No valid fields provided"
+            }), 400
+        
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        updated_agent = loop.run_until_complete(agent_repo.update_agent(agent_id, filtered_data))
+        loop.close()
+        
+        if not updated_agent:
+            return jsonify({
+                "status": "error",
+                "message": "Agent not found"
+            }), 404
+        
+        return jsonify({
+            "status": "success",
+            "message": "Agent configuration updated",
+            "agent": updated_agent
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error updating agent config: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to update agent config: {str(e)}"
+        }), 500
+
+
+@api_bp.route('/agents', methods=['POST'])
+def create_agent():
+    """Create a new agent configuration."""
+    try:
+        payload = request.get_json()
+        if not payload:
+            return jsonify({
+                "status": "error",
+                "message": "No data provided"
+            }), 400
+        
+        # Validate required fields
+        required_fields = ["id", "name"]
+        for field in required_fields:
+            if field not in payload:
+                return jsonify({
+                    "status": "error",
+                    "message": f"Missing required field: {field}"
+                }), 400
+        
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        new_agent = loop.run_until_complete(agent_repo.create_agent(payload))
+        loop.close()
+        
+        return jsonify({
+            "status": "success",
+            "message": "Agent created successfully",
+            "agent": new_agent
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Error creating agent: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to create agent: {str(e)}"
+        }), 500
+
+
+@api_bp.route('/personalities', methods=['GET'])
+def get_all_personalities():
+    """Get all personality profiles."""
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        personalities = loop.run_until_complete(personality_repo.get_all_personalities())
+        loop.close()
+        
+        return jsonify({
+            "status": "success",
+            "personalities": personalities
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error retrieving personalities: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to retrieve personalities: {str(e)}"
         }), 500
 
 
