@@ -10,7 +10,7 @@ from ai_super_agent.views.strategy import strategy_bp
 from ai_super_agent.views.logs import logs_bp
 from ai_super_agent.views.agents import agents_bp
 from ai_super_agent.services.plan_inspector import PlanInspector
-from ai_super_agent.repos.agent_repository import AgentRepository, PersonalityRepository
+from ai_super_agent.repos.agent_repository_sync import AgentRepository, PersonalityRepository
 
 logger = logging.getLogger(__name__)
 
@@ -420,10 +420,7 @@ def list_plans():
 def get_all_agents():
     """Get all agent configurations."""
     try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        agents = loop.run_until_complete(agent_repo.get_all_agents())
-        loop.close()
+        agents = agent_repo.get_all_agents()
         
         return jsonify({
             "status": "success",
@@ -442,10 +439,7 @@ def get_all_agents():
 def get_agent_config(agent_id):
     """Get a specific agent's configuration."""
     try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        agent = loop.run_until_complete(agent_repo.get_agent_by_id(agent_id))
-        loop.close()
+        agent = agent_repo.get_agent_by_id(agent_id)
         
         if not agent:
             return jsonify({
@@ -487,10 +481,7 @@ def update_agent_config(agent_id):
                 "message": "No valid fields provided"
             }), 400
         
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        updated_agent = loop.run_until_complete(agent_repo.update_agent(agent_id, filtered_data))
-        loop.close()
+        updated_agent = agent_repo.update_agent(agent_id, filtered_data)
         
         if not updated_agent:
             return jsonify({
@@ -532,10 +523,7 @@ def create_agent():
                     "message": f"Missing required field: {field}"
                 }), 400
         
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        new_agent = loop.run_until_complete(agent_repo.create_agent(payload))
-        loop.close()
+        new_agent = agent_repo.create_agent(payload)
         
         return jsonify({
             "status": "success",
@@ -555,10 +543,7 @@ def create_agent():
 def get_all_personalities():
     """Get all personality profiles."""
     try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        personalities = loop.run_until_complete(personality_repo.get_all_personalities())
-        loop.close()
+        personalities = personality_repo.get_all_personalities()
         
         return jsonify({
             "status": "success",
