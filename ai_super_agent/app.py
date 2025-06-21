@@ -118,11 +118,21 @@ def setup_ui_serving(app):
     
     ui_bp = Blueprint('ui', __name__, static_folder='../ui/dist')
 
-    @ui_bp.route('/', defaults={'path': 'index.html'})
+    @ui_bp.route('/', defaults={'path': ''})
     @ui_bp.route('/<path:path>')
     def serve_ui(path):
         root_dir = os.path.join(os.path.dirname(__file__), '..', 'ui', 'dist')
-        return send_from_directory(root_dir, path)
+        
+        # If path is empty or doesn't exist, serve index.html for React Router
+        if path == '' or path.startswith('workings/') or path in ['task-runner', 'strategy', 'personality', 'logs']:
+            return send_from_directory(root_dir, 'index.html')
+        
+        # Try to serve the requested file
+        try:
+            return send_from_directory(root_dir, path)
+        except:
+            # Fallback to index.html for client-side routing
+            return send_from_directory(root_dir, 'index.html')
 
     app.register_blueprint(ui_bp)
 
