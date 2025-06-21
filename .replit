@@ -2,7 +2,7 @@ modules = ["python-3.11"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["libxcrypt", "openssl", "postgresql"]
+packages = ["libxcrypt", "openssl", "postgresql", "redis"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -40,3 +40,11 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "uv add redis pydantic python-dotenv flask-asyncio"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 6379
+externalPort = 3000
