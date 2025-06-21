@@ -36,6 +36,9 @@ def create_flask_app() -> Flask:
     # Setup UI serving
     setup_ui_serving(app)
     
+    # Setup workings API
+    setup_workings_api(app)
+    
     return app
 
 
@@ -109,8 +112,9 @@ def main():
 
 def setup_ui_serving(app):
     """Configure Flask to serve the React UI from ui/dist"""
-    from flask import send_from_directory, Blueprint
+    from flask import send_from_directory, Blueprint, jsonify
     import os
+    import uuid as uuid_lib
     
     ui_bp = Blueprint('ui', __name__, static_folder='../ui/dist')
 
@@ -121,6 +125,104 @@ def setup_ui_serving(app):
         return send_from_directory(root_dir, path)
 
     app.register_blueprint(ui_bp)
+
+def setup_workings_api(app):
+    """Configure Flask to serve task workings and documentation"""
+    from flask import Blueprint, jsonify, send_file
+    import os
+    import uuid as uuid_lib
+    
+    workings_bp = Blueprint('workings', __name__)
+
+    @workings_bp.route('/workings/<uuid:task_id>')
+    def get_workings(task_id):
+        """Return raw markdown plus an ordered list of each saved step."""
+        try:
+            # Create data directory if it doesn't exist
+            data_dir = os.path.join(os.path.dirname(__file__), '..', 'data', 'workings')
+            os.makedirs(data_dir, exist_ok=True)
+            
+            path = os.path.join(data_dir, f'{task_id}.md')
+            
+            if not os.path.exists(path):
+                # Return empty workings for new tasks
+                return jsonify({
+                    'markdown': '',
+                    'steps': [],
+                    'task_id': str(task_id),
+                    'status': 'not_found'
+                })
+            
+            with open(path, 'r', encoding='utf-8') as f:
+                md = f.read()
+            
+            # Split by step breaks
+            steps = md.split('\n--- STEP BREAK ---\n')
+            
+            return jsonify({
+                'markdown': steps[-1] if steps else '',
+                'steps': steps,
+                'task_id': str(task_id),
+                'status': 'found',
+                'step_count': len(steps)
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'error': str(e),
+                'task_id': str(task_id),
+                'status': 'error'
+            }), 500
+
+    @workings_bp.route('/workings/<uuid:task_id>/raw')
+    def get_workings_raw(task_id):
+        """Return raw markdown file for download"""
+        try:
+            data_dir = os.path.join(os.path.dirname(__file__), '..', 'data', 'workings')
+            path = os.path.join(data_dir, f'{task_id}.md')
+            
+            if not os.path.exists(path):
+                return jsonify({'error': 'File not found'}), 404
+                
+            return send_file(path, as_attachment=True, download_name=f'task_{task_id}_workings.md')
+            
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @workings_bp.route('/workings')
+    def list_workings():
+        """List all available task workings"""
+        try:
+            data_dir = os.path.join(os.path.dirname(__file__), '..', 'data', 'workings')
+            os.makedirs(data_dir, exist_ok=True)
+            
+            workings = []
+            for filename in os.listdir(data_dir):
+                if filename.endswith('.md'):
+                    task_id = filename[:-3]  # Remove .md extension
+                    try:
+                        uuid_lib.UUID(task_id)  # Validate UUID format
+                        file_path = os.path.join(data_dir, filename)
+                        stat = os.stat(file_path)
+                        
+                        workings.append({
+                            'task_id': task_id,
+                            'filename': filename,
+                            'size': stat.st_size,
+                            'modified': stat.st_mtime,
+                        })
+                    except ValueError:
+                        continue  # Skip non-UUID files
+            
+            return jsonify({
+                'workings': workings,
+                'count': len(workings)
+            })
+            
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    app.register_blueprint(workings_bp)
 
 if __name__ == "__main__":
     main()
