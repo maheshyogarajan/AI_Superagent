@@ -1,6 +1,6 @@
 """Database setup and session management for AI Super Agent."""
 import os
-from sqlalchemy import MetaData, Table, Column, String, JSON, DateTime, create_engine
+from sqlalchemy import MetaData, Table, Column, String, JSON, DateTime, Float, create_engine
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.sql import func
 
@@ -23,6 +23,35 @@ plans_table = Table(
     metadata,
     Column('id', String, primary_key=True),
     Column('outline', JSON, nullable=False),
+    Column('created_at', DateTime(timezone=True), server_default=func.now()),
+    Column('updated_at', DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+)
+
+# Agents table definition
+agents_table = Table(
+    'agents',
+    metadata,
+    Column('id', String, primary_key=True),
+    Column('name', String, nullable=False),
+    Column('role', String),
+    Column('personality_id', String, server_default='Default'),
+    Column('temperature_cap', Float, server_default='0.8'),
+    Column('risk_bias', Float, server_default='0.5'),
+    Column('default_model', String, server_default='gpt-4o'),
+    Column('created_at', DateTime(timezone=True), server_default=func.now()),
+    Column('updated_at', DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+)
+
+# Personalities table definition
+personalities_table = Table(
+    'personalities',
+    metadata,
+    Column('profile_id', String, primary_key=True),
+    Column('name', String, nullable=False),
+    Column('description', String),
+    Column('creativity', Float, server_default='0.7'),
+    Column('analytical', Float, server_default='0.7'),
+    Column('max_temperature', Float, server_default='0.9'),
     Column('created_at', DateTime(timezone=True), server_default=func.now()),
     Column('updated_at', DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 )
