@@ -85,7 +85,7 @@ def submit_task():
 
 
 @api_bp.route('/status', methods=['GET'])
-async def get_status():
+def get_status():
     """
     Get system status information.
     
@@ -97,15 +97,16 @@ async def get_status():
         
         # Check Redis connection
         try:
-            client = await get_redis_client()
-            await client.ping()
+            import asyncio
+            client = asyncio.run(get_redis_client())
+            asyncio.run(client.ping())
             redis_status = "connected"
         except Exception as e:
             redis_status = f"error: {str(e)}"
         
         # Get queue lengths
-        coordinator_queue_length = await get_queue_length("coordinator")
-        research_queue_length = await get_queue_length("research")
+        coordinator_queue_length = asyncio.run(get_queue_length("coordinator"))
+        research_queue_length = asyncio.run(get_queue_length("research"))
         
         status_info = {
             "status": "running",
