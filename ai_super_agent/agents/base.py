@@ -16,20 +16,26 @@ class BaseAgent(ABC):
     Provides common functionality for message handling and queue operations.
     """
     
-    def __init__(self, agent_id: str, queue_timeout: int = 1):
+    def __init__(self, agent_id: str, queue_timeout: int = 1, personality_id: str = "Default"):
         """
         Initialize the base agent.
         
         Args:
             agent_id: Unique identifier for this agent
             queue_timeout: Timeout in seconds for queue operations
+            personality_id: Personality profile identifier
         """
         self.agent_id = agent_id
         self.queue_timeout = queue_timeout
         self.running = False
         self._stop_event = asyncio.Event()
         
-        logger.info(f"Initialized {self.__class__.__name__} with ID: {agent_id}")
+        # Load personality profile
+        from ai_super_agent.personalities import load_personality, get_default_personality
+        self.personality = load_personality(personality_id) or get_default_personality()
+        self.personality_id = personality_id
+        
+        logger.info(f"Initialized {self.__class__.__name__} with ID: {agent_id}, Personality: {self.personality.get('name', 'Default')}")
     
     async def listen(self) -> None:
         """
@@ -154,3 +160,28 @@ class BaseAgent(ABC):
     def is_running(self) -> bool:
         """Check if the agent is currently running."""
         return self.running
+    
+    def get_personality_prompt(self, base_prompt: str) -> str:
+        """Enhance prompt with personality characteristics."""
+        if self.personality_id == "Default":
+            return base_prompt
+        
+        personality_context = f"""
+You are embodying the personality and thinking style of {self.personality['name']}.
+
+Key characteristics:
+- Tone: {self.personality['tone']}
+- Decision style: {self.personality['decision_style']}
+- Communication style: {self.personality['communication_style']}
+- Core values: {', '.join(self.personality.get('core_values', []))}
+
+When responding, think and communicate as {self.personality['name']} would, incorporating their unique perspective and approach.
+
+{base_prompt}
+"""
+        return personality_context
+    
+    def get_personality_temperature(self, requested_temp: float = 0.7) -> float:
+        """Get temperature clamped by personality max_temperature."""
+        max_temp = self.personality.get('max_temperature', 1.0)
+        return min(requested_temp, max_temp)
