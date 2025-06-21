@@ -9,14 +9,14 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
   return res.json() as Promise<T>;
 }
 
-// Type definitions for API responses
-export interface Personality {
-  [key: string]: string;
-}
+// Import shared types
+import type { Envelope, SimulationSpec, RiskProfile } from '@/types/mcp';
+import type { PersonalityProfile } from '@/types/personality';
 
+// API response types
 export interface PersonalitiesResponse {
   status: string;
-  personalities: Personality;
+  personalities: Record<string, string>;
   count: number;
 }
 
@@ -37,21 +37,13 @@ export interface SystemStatus {
 export interface TaskSubmission {
   instruction: string;
   personality_id?: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   parameters?: {
     temperature?: number;
     max_tokens?: number;
   };
-  simulation_spec?: {
-    players: string[];
-    strategies: Record<string, string[]>;
-    solution_concept?: string;
-  };
-  risk_profile?: {
-    regulatory?: number;
-    competitive?: number;
-    tech?: number;
-  };
+  simulation_spec?: SimulationSpec;
+  risk_profile?: RiskProfile;
 }
 
 export interface TaskResponse {
