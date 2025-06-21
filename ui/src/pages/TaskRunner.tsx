@@ -269,6 +269,9 @@ export function TaskRunner() {
           </Card>
         </div>
       </div>
+
+      {/* Plan Drawer */}
+      <PlanDrawer planId={planId} onClose={() => setPlanId(null)} />
     </div>
   )
 }
