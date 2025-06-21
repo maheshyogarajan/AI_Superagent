@@ -2,7 +2,6 @@
 
 import json
 import logging
-import asyncio
 from typing import Optional, Any, Dict
 import redis.asyncio as redis
 from ai_super_agent.config import settings
@@ -22,6 +21,18 @@ from ai_super_agent.queue.memory_broker import (
     clear_queue as memory_clear_queue
 )
 
+# Try simplified broker if available
+try:
+    from ai_super_agent.queue.simple_broker import (
+        enqueue as simple_enqueue,
+        dequeue as simple_dequeue,
+        get_queue_length as simple_get_queue_length,
+        clear_queue as simple_clear_queue
+    )
+    USE_SIMPLE_BROKER = True
+except ImportError:
+    USE_SIMPLE_BROKER = False
+
 
 async def get_redis_client() -> Optional[redis.Redis]:
     """Get or create Redis client instance."""
@@ -29,18 +40,14 @@ async def get_redis_client() -> Optional[redis.Redis]:
     
     if _redis_client is None and not _use_memory_fallback:
         try:
-            _redis_client = redis.from_url(
-                settings.redis_url,
-                decode_responses=True,
-                socket_connect_timeout=5,
-                socket_keepalive=True,
-                socket_keepalive_options={},
-                health_check_interval=30,
-            )
+            if not settings.redis_url:
+                raise ValueError("Redis URL not configured")
+                
+            _redis_client = redis.from_url(settings.redis_url, decode_responses=True)
             
             # Test connection
             await _redis_client.ping()
-            logger.info(f"Connected to Redis at {settings.redis_url}")
+            logger.info(f"Connected to Redis successfully")
         except Exception as e:
             logger.warning(f"Failed to connect to Redis: {e}. Using memory fallback.")
             _use_memory_fallback = True
