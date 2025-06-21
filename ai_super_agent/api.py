@@ -12,7 +12,7 @@ api_bp = Blueprint('api', __name__)
 
 
 @api_bp.route('/task', methods=['POST'])
-async def submit_task():
+def submit_task():
     """
     Submit a new task to the agent system.
     
@@ -57,8 +57,9 @@ async def submit_task():
             context=context
         )
         
-        # Enqueue the task
-        success = await enqueue(recipient, envelope)
+        # Enqueue the task synchronously
+        import asyncio
+        success = asyncio.run(enqueue(recipient, envelope))
         
         if success:
             logger.info(f"Task submitted successfully to {recipient}: {instruction[:100]}...")
