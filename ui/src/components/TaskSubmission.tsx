@@ -175,7 +175,7 @@ export function TaskSubmission({ selectedPersonality, onTaskSubmitted }: TaskSub
               <button
                 key={index}
                 onClick={() => setInstruction(example)}
-                className="w-full p-2 text-left text-xs bg-muted hover:bg-accent rounded border border-border transition-colors"
+                className="w-full p-2 text-left text-xs bg-muted hover:bg-accent rounded border transition-colors"
               >
                 {example}
               </button>
