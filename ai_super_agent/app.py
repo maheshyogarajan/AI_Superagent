@@ -33,18 +33,8 @@ def create_flask_app() -> Flask:
     # Register API blueprint
     app.register_blueprint(api_bp, url_prefix='/api')
     
-    # Root endpoint
-    @app.route('/')
-    def root():
-        return {
-            "message": "AI Super Agent is running",
-            "status": "active",
-            "endpoints": [
-                "/api/task (POST)",
-                "/api/status (GET)",
-                "/api/health (GET)"
-            ]
-        }
+    # Setup UI serving
+    setup_ui_serving(app)
     
     return app
 
@@ -116,6 +106,21 @@ def main():
     finally:
         logger.info("AI Super Agent system stopped")
 
+
+def setup_ui_serving(app):
+    """Configure Flask to serve the React UI from ui/dist"""
+    from flask import send_from_directory, Blueprint
+    import os
+    
+    ui_bp = Blueprint('ui', __name__, static_folder='../ui/dist')
+
+    @ui_bp.route('/', defaults={'path': 'index.html'})
+    @ui_bp.route('/<path:path>')
+    def serve_ui(path):
+        root_dir = os.path.join(os.path.dirname(__file__), '..', 'ui', 'dist')
+        return send_from_directory(root_dir, path)
+
+    app.register_blueprint(ui_bp)
 
 if __name__ == "__main__":
     main()

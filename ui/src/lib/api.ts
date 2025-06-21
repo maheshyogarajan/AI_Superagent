@@ -10,8 +10,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 }
 
 // Import shared types
-import type { Envelope, SimulationSpec, RiskProfile } from '@/types/mcp';
-import type { PersonalityProfile } from '@/types/personality';
+import type { SimulationSpec, RiskProfile } from '@/types/mcp';
 
 // API response types
 export interface PersonalitiesResponse {
