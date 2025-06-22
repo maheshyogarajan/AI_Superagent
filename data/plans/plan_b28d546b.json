@@ -1,0 +1,53 @@
+{
+  "plan_id": "plan_b28d546b",
+  "task_id": "dbfe9923-2ca0-4180-a626-94b0c9556fed",
+  "original_instruction": "Create a marketing campaign for sustainable technology products",
+  "steps": [
+    {
+      "step_id": "coord_001",
+      "agent_id": "coordinator",
+      "instruction": "Analyze task requirements and determine optimal execution strategy",
+      "dependencies": [],
+      "estimated_duration": 30,
+      "parameters": {
+        "original_instruction": "Create a marketing campaign for sustainable technology products",
+        "complexity": "medium",
+        "required_agents": [
+          "coordinator",
+          "research"
+        ]
+      }
+    },
+    {
+      "step_id": "coord_002",
+      "agent_id": "coordinator",
+      "instruction": "Route task to research agent with context and parameters",
+      "dependencies": [
+        "coord_001"
+      ],
+      "estimated_duration": 15,
+      "parameters": {
+        "target_agent": "research",
+        "routing_reason": "Keywords found: market"
+      }
+    },
+    {
+      "step_id": "research_001",
+      "agent_id": "research",
+      "instruction": "Create a marketing campaign for sustainable technology products",
+      "dependencies": [
+        "coord_002"
+      ],
+      "estimated_duration": 180,
+      "parameters": {
+        "research_type": "standard",
+        "keywords": [
+          "market"
+        ]
+      }
+    }
+  ],
+  "total_estimated_duration": 225,
+  "created_at": "2025-06-22T06:40:09.894812",
+  "status": "draft"
+}
