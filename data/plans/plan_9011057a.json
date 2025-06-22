@@ -1,0 +1,53 @@
+{
+  "plan_id": "plan_9011057a",
+  "task_id": "ff7aedba-1d03-43e6-b81e-ce12be011494",
+  "original_instruction": "how much automation with AI should I consider when launching a tax firm? How much will it cost to launch in India? Compare and contrast ",
+  "steps": [
+    {
+      "step_id": "coord_001",
+      "agent_id": "coordinator",
+      "instruction": "Analyze task requirements and determine optimal execution strategy",
+      "dependencies": [],
+      "estimated_duration": 30,
+      "parameters": {
+        "original_instruction": "how much automation with AI should I consider when launching a tax firm? How much will it cost to launch in India? Compare and contrast ",
+        "complexity": "medium",
+        "required_agents": [
+          "coordinator",
+          "research"
+        ]
+      }
+    },
+    {
+      "step_id": "coord_002",
+      "agent_id": "coordinator",
+      "instruction": "Route task to research agent with context and parameters",
+      "dependencies": [
+        "coord_001"
+      ],
+      "estimated_duration": 15,
+      "parameters": {
+        "target_agent": "research",
+        "routing_reason": "Keywords found: compare"
+      }
+    },
+    {
+      "step_id": "research_001",
+      "agent_id": "research",
+      "instruction": "how much automation with AI should I consider when launching a tax firm? How much will it cost to launch in India? Compare and contrast ",
+      "dependencies": [
+        "coord_002"
+      ],
+      "estimated_duration": 180,
+      "parameters": {
+        "research_type": "standard",
+        "keywords": [
+          "compare"
+        ]
+      }
+    }
+  ],
+  "total_estimated_duration": 225,
+  "created_at": "2025-06-22T05:48:33.587457",
+  "status": "draft"
+}
