@@ -92,50 +92,28 @@ class CoordinatorAgent(BaseAgent):
             queue_timeout=settings.coordinator_queue_timeout
         )
     
-    def create_plan(self, user_instruction: str) -> Dict[str, Any]:
+    def create_plan(self, instruction: str) -> dict:
         """
         Create execution plan from user instruction.
         
         Args:
-            user_instruction: The user's task instruction
+            instruction: The user's task instruction
             
         Returns:
             Dictionary containing plan_id and outline with auto-assigned agents
         """
-        from ..catalog import decompose_instruction, get_best_agent
-        from ..db import plans_table
-        from sqlalchemy import create_engine, text
-        import uuid
-        import os
+        from ..repos import PlanRepo, AgentCatalog
+        from ..catalog import decompose_instruction
         
-        # Decompose instruction into steps  
-        nodes = decompose_instruction(user_instruction)
+        # Decompose instruction into steps
+        nodes = decompose_instruction(instruction)
         
         # Auto-assign best agent for each step using capability matrix
         for n in nodes:
-            agent = get_best_agent(n['type'], n.get('complexity', 3))
-            n['agent_id'] = agent.agent_id
+            n["agent"] = AgentCatalog.pick(n["type"])
         
-        # Generate plan ID and persist with status=draft
-        plan_id = str(uuid.uuid4())
-        
-        # Insert plan into database
-        database_url = os.getenv("DATABASE_URL")
-        if not database_url:
-            raise ValueError("DATABASE_URL environment variable is required")
-        engine = create_engine(database_url)
-        with engine.connect() as conn:
-            import json
-            conn.execute(
-                text("INSERT INTO plans (id, instruction, outline, status) VALUES (:id, :instruction, :outline::jsonb, :status)"),
-                {
-                    "id": plan_id,
-                    "instruction": user_instruction,
-                    "outline": json.dumps(nodes),
-                    "status": "draft"
-                }
-            )
-            conn.commit()
+        # Persist plan with status='draft'
+        plan_id = PlanRepo.insert(instruction, nodes)
         
         return {"plan_id": plan_id, "outline": nodes}
     
