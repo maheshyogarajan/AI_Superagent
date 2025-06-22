@@ -6,6 +6,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Badge } from '../components/ui/badge';
 import { Eye, Play, Edit, Save, X } from 'lucide-react';
+import { EditableStep } from '../components/EditableStep';
 
 interface PlanStep {
   step_id: string;
@@ -66,40 +67,12 @@ export function PlanInspector() {
     }
   };
 
-  const updateNodeAgent = async (stepIndex: number, newAgentId: string) => {
+  const updateNode = async (stepId: string, field: string, value: any) => {
     if (!currentPlan) return;
-
-    const updatedOutline = [...currentPlan.outline];
-    updatedOutline[stepIndex] = {
-      ...updatedOutline[stepIndex],
-      agent_id: newAgentId
-    };
-
-    // Update plan in database
-    try {
-      await fetch(`/plans/${currentPlan.plan_id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ outline: updatedOutline })
-      });
-
-      setCurrentPlan({
-        ...currentPlan,
-        outline: updatedOutline
-      });
-    } catch (error) {
-      console.error('Error updating plan:', error);
-    }
-  };
-
-  const updateNodeDesc = async (stepIndex: number, newDescription: string) => {
-    if (!currentPlan) return;
-
-    const updatedOutline = [...currentPlan.outline];
-    updatedOutline[stepIndex] = {
-      ...updatedOutline[stepIndex],
-      instruction: newDescription
-    };
+    
+    const updatedOutline = currentPlan.outline.map(step => 
+      step.step_id === stepId ? { ...step, [field]: value } : step
+    );
 
     // Update plan in database
     try {
@@ -284,51 +257,11 @@ export function PlanInspector() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {currentPlan.outline.map((step, index) => (
-                <div 
-                  key={step.step_id}
-                  className="border rounded-lg p-4 space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="px-2 py-1 rounded border text-xs font-medium">{step.step_id}</div>
-                      <Select
-                        value={step.agent_id}
-                        onValueChange={(value) => updateNodeAgent(index, value)}
-                      >
-                        <SelectTrigger className="w-48">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {AVAILABLE_AGENTS.map((agent) => (
-                            <SelectItem key={agent.id} value={agent.id}>
-                              <div className="flex flex-col">
-                                <span className="font-medium">{agent.name}</span>
-                                <span className="text-xs text-gray-500">{agent.description}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <span>{step.estimated_duration}s</span>
-                      {step.dependencies.length > 0 && (
-                        <div className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">
-                          Depends: {step.dependencies.join(', ')}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <Textarea
-                    defaultValue={step.instruction}
-                    onBlur={(e) => updateNodeDesc(index, e.target.value)}
-                    className="min-h-[80px]"
-                    placeholder="Step description..."
-                  />
-                </div>
+              {currentPlan.outline.map((node) => (
+                <EditableStep key={node.step_id}
+                              node={node}
+                              agentOptions={AVAILABLE_AGENTS}
+                              onChange={updateNode} />
               ))}
             </div>
           </CardContent>
