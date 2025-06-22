@@ -2,7 +2,7 @@
 
 import uuid
 from typing import List, Dict, Any
-from ai_super_agent.message_queue.broker import MessageQueueBroker
+from ai_super_agent.message_queue.broker import enqueue
 from ai_super_agent.models.mcp import MCPEnvelope
 import logging
 
@@ -25,8 +25,6 @@ class TaskFactory:
             List of task IDs that were created and enqueued
         """
         task_ids = []
-        broker = MessageQueueBroker()
-        
         for step in outline:
             # Generate unique task ID
             task_id = str(uuid.uuid4())
@@ -47,9 +45,9 @@ class TaskFactory:
                 }
             )
             
-            # Enqueue the task
+            # Enqueue the task using the broker function
             try:
-                success = await broker.enqueue(envelope)
+                success = await enqueue(envelope.recipient, envelope)
                 if success:
                     logger.info(f"Enqueued task {task_id} to agent {envelope.recipient}")
                 else:
