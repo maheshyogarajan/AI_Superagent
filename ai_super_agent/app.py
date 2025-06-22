@@ -128,6 +128,10 @@ def create_flask_app() -> Flask:
     # Register API blueprint
     app.register_blueprint(api_bp, url_prefix='/api')
     
+    # Register new plans blueprint
+    from ai_super_agent.routes.plans_bp import plans_bp
+    app.register_blueprint(plans_bp)
+    
     # Setup plans API
     setup_plans_api(app)
     
