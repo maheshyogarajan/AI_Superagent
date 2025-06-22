@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../components/ui/badge';
 import { Eye, Play, Edit, Save, X } from 'lucide-react';
 import { EditableStep } from '../components/EditableStep';
+import StrategyDiff from '../components/StrategyDiff';
 
 interface PlanStep {
   step_id: string;
@@ -266,6 +267,15 @@ export function PlanInspector() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Strategy Diff Editor - shown when plan is completed */}
+      {currentPlan && (
+        <StrategyDiff 
+          planId={currentPlan.plan_id}
+          planStatus={currentPlan.status}
+          className="mt-6"
+        />
       )}
     </div>
   );
