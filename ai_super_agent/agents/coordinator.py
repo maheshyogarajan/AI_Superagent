@@ -3,12 +3,78 @@
 import logging
 import os
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, List
 from ai_super_agent.agents.base import BaseAgent
 from ai_super_agent.models.mcp import MCPEnvelope
 from ai_super_agent.config import settings
+from ai_super_agent.services.plan_inspector import PlanInspector
+from ai_super_agent.repos.plan_repository import PlanRepository, PlanStep
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class TaskNode:
+    """Enhanced PlanStep with additional methods for task DAG."""
+    step_id: str
+    agent_id: str
+    instruction: str
+    dependencies: List[str]
+    estimated_duration: int = None
+    parameters: Dict[str, Any] = None
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation."""
+        return {
+            "step_id": self.step_id,
+            "agent_id": self.agent_id,
+            "instruction": self.instruction,
+            "dependencies": self.dependencies,
+            "estimated_duration": self.estimated_duration,
+            "parameters": self.parameters
+        }
+    
+    def to_task_record(self) -> Dict[str, Any]:
+        """Convert to task record format."""
+        return {
+            "task_id": self.step_id,
+            "agent_id": self.agent_id,
+            "instruction": self.instruction,
+            "status": "pending",
+            "dependencies": self.dependencies,
+            "parameters": self.parameters or {}
+        }
+
+
+def build_task_dag(user_instruction: str) -> List[TaskNode]:
+    """
+    Build task DAG (Directed Acyclic Graph) from user instruction.
+    
+    Args:
+        user_instruction: The user's task instruction
+        
+    Returns:
+        List of TaskNode objects representing the task execution plan
+    """
+    # Use existing plan inspector to create execution plan
+    plan_inspector = PlanInspector()
+    execution_plan = plan_inspector.create_execution_plan(user_instruction)
+    
+    # Convert ExecutionPlan steps to TaskNode objects
+    plan_nodes = []
+    for step in execution_plan.steps:
+        task_node = TaskNode(
+            step_id=step.step_id,
+            agent_id=step.agent_id,
+            instruction=step.instruction,
+            dependencies=step.dependencies,
+            estimated_duration=step.estimated_duration,
+            parameters=step.parameters
+        )
+        plan_nodes.append(task_node)
+    
+    return plan_nodes
 
 
 class CoordinatorAgent(BaseAgent):
@@ -22,6 +88,22 @@ class CoordinatorAgent(BaseAgent):
             agent_id="coordinator",
             queue_timeout=settings.coordinator_queue_timeout
         )
+    
+    async def create_plan(self, user_instruction: str) -> Dict[str, Any]:
+        """
+        Create execution plan from user instruction.
+        
+        Args:
+            user_instruction: The user's task instruction
+            
+        Returns:
+            Dictionary containing plan outline and first task record
+        """
+        plan_nodes = build_task_dag(user_instruction)  # existing helper
+        return {
+            "plan_outline": [n.to_dict() for n in plan_nodes],
+            "first_task": plan_nodes[0].to_task_record() if plan_nodes else None
+        }
     
     async def handle(self, envelope: MCPEnvelope) -> Dict[str, Any]:
         """
