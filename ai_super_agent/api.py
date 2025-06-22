@@ -190,6 +190,88 @@ def health_check():
     }), 200
 
 
+@api_bp.route('/kpi', methods=['GET'])
+def get_kpis():
+    """Get system KPIs for dashboard monitoring."""
+    try:
+        from ai_super_agent.message_queue import memory_broker
+        import os
+        
+        # Get agent status
+        active_agents = ["coordinator", "research"]
+        
+        # Check Redis/memory broker status
+        try:
+            queue_size = memory_broker.qsize()
+            broker_status = f"Memory Fallback ({queue_size} queued)"
+        except:
+            broker_status = "Unavailable"
+        
+        # Check database status
+        try:
+            from ai_super_agent.db import sync_engine
+            with sync_engine.connect() as conn:
+                conn.execute("SELECT 1")
+            db_status = "Connected"
+        except:
+            db_status = "Disconnected"
+        
+        # Get plan counts
+        try:
+            with sync_engine.connect() as conn:
+                from sqlalchemy import text
+                result = conn.execute(text("SELECT status, COUNT(*) FROM plans GROUP BY status"))
+                plan_counts = dict(result.fetchall())
+        except:
+            plan_counts = {}
+        
+        # Build KPI response
+        kpis = [
+            {
+                "id": "active_agents",
+                "label": "Active Agents",
+                "value": f"{len(active_agents)} Operational"
+            },
+            {
+                "id": "redis_status", 
+                "label": "Message Broker",
+                "value": broker_status
+            },
+            {
+                "id": "database_status",
+                "label": "Database",
+                "value": db_status
+            },
+            {
+                "id": "draft_plans",
+                "label": "Draft Plans",
+                "value": str(plan_counts.get('draft', 0))
+            },
+            {
+                "id": "approved_plans",
+                "label": "Approved Plans", 
+                "value": str(plan_counts.get('approved', 0))
+            },
+            {
+                "id": "executing_plans",
+                "label": "Executing Plans",
+                "value": str(plan_counts.get('executing', 0))
+            }
+        ]
+        
+        return jsonify({
+            "status": "success",
+            "kpis": kpis
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error retrieving KPIs: {e}")
+        return jsonify({
+            "status": "error", 
+            "message": f"Failed to retrieve KPIs: {str(e)}"
+        }), 500
+
+
 @api_bp.route('/personalities', methods=['GET'])
 def get_personalities():
     """Get available personality profiles."""
