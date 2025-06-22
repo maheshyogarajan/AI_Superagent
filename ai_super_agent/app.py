@@ -136,6 +136,10 @@ def create_flask_app() -> Flask:
     from ai_super_agent.routes.logs_bp import logs_bp
     app.register_blueprint(logs_bp)
     
+    # Register strategy blueprint
+    from ai_super_agent.routes.strategy_bp import strategy_bp
+    app.register_blueprint(strategy_bp)
+    
     # Setup plans API
     setup_plans_api(app)
     
