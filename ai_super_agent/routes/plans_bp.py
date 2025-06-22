@@ -63,10 +63,9 @@ def approve_plan(pid):
                     }
                 )
                 
-                # Run async enqueue in sync context
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                loop.run_until_complete(enqueue(envelope.recipient, envelope))
+                # Enqueue synchronously using memory broker
+                from ai_super_agent.message_queue import memory_broker
+                memory_broker.put((envelope.recipient, envelope))
             except Exception as e:
                 print(f"Warning: Could not enqueue task {task_id}: {e}")
         

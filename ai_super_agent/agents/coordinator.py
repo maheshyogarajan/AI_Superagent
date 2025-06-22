@@ -102,24 +102,27 @@ class CoordinatorAgent(BaseAgent):
         Returns:
             Dictionary containing plan_id and outline with auto-assigned agents
         """
-        # Temporarily comment out imports to fix startup issues
-        # from ..repos.plan_repo import PlanRepo
-        # from ..catalog import get_best_agent
-        from ..catalog import decompose_instruction
+        from ..repos.plan_repo import PlanRepo
+        from ..catalog import decompose_instruction, get_best_agent
         
         # Decompose instruction into steps
         nodes = decompose_instruction(instruction)
         
         # Auto-assign best agent for each step using capability matrix
-        from ..catalog import get_best_agent
         for n in nodes:
             best_agent = get_best_agent(n.get("type", "general"))
             n["agent"] = best_agent.agent_id
         
-        # Persist plan with status='draft' - temporarily simplified
-        import uuid
-        plan_id = str(uuid.uuid4())
-        # TODO: Implement proper plan persistence when PlanRepo is available
+        # Persist plan with status='draft' using synchronous PlanRepo
+        from sqlalchemy.orm import sessionmaker
+        from ai_super_agent.db import sync_engine
+        
+        Session = sessionmaker(bind=sync_engine)
+        session = Session()
+        try:
+            plan_id = PlanRepo.insert(session, instruction, nodes)
+        finally:
+            session.close()
         
         return {"plan_id": plan_id, "outline": nodes}
     
