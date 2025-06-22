@@ -14,7 +14,10 @@ if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
         DATABASE_URL = DATABASE_URL.split("?sslmode=")[0]
 
 # Create async engine
-async_engine = create_async_engine(DATABASE_URL)
+if DATABASE_URL:
+    async_engine = create_async_engine(DATABASE_URL)
+else:
+    raise ValueError("DATABASE_URL environment variable is required")
 async_session = async_sessionmaker(async_engine, expire_on_commit=False)
 
 # Metadata for table definitions
@@ -60,4 +63,7 @@ personalities_table = Table(
 )
 
 # Sync engine for Alembic migrations
-sync_engine = create_engine(DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://"))
+if DATABASE_URL:
+    sync_engine = create_engine(DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://"))
+else:
+    raise ValueError("DATABASE_URL environment variable is required")
