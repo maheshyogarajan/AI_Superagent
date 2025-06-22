@@ -1,0 +1,54 @@
+{
+  "plan_id": "plan_c24c2a76",
+  "task_id": "f31debc6-5292-4f54-ac69-cb3c414b84ef",
+  "original_instruction": "Research renewable energy trends and create marketing strategy",
+  "steps": [
+    {
+      "step_id": "coord_001",
+      "agent_id": "coordinator",
+      "instruction": "Analyze task requirements and determine optimal execution strategy",
+      "dependencies": [],
+      "estimated_duration": 30,
+      "parameters": {
+        "original_instruction": "Research renewable energy trends and create marketing strategy",
+        "complexity": "medium",
+        "required_agents": [
+          "coordinator",
+          "research"
+        ]
+      }
+    },
+    {
+      "step_id": "coord_002",
+      "agent_id": "coordinator",
+      "instruction": "Route task to research agent with context and parameters",
+      "dependencies": [
+        "coord_001"
+      ],
+      "estimated_duration": 15,
+      "parameters": {
+        "target_agent": "research",
+        "routing_reason": "Keywords found: research, market"
+      }
+    },
+    {
+      "step_id": "research_001",
+      "agent_id": "research",
+      "instruction": "Research renewable energy trends and create marketing strategy",
+      "dependencies": [
+        "coord_002"
+      ],
+      "estimated_duration": 180,
+      "parameters": {
+        "research_type": "standard",
+        "keywords": [
+          "research",
+          "market"
+        ]
+      }
+    }
+  ],
+  "total_estimated_duration": 225,
+  "created_at": "2025-06-22T06:15:35.731502",
+  "status": "draft"
+}
