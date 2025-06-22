@@ -2,8 +2,9 @@
 
 import logging
 import os
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from ai_super_agent.agents.base import BaseAgent
 from ai_super_agent.models.mcp import MCPEnvelope
 from ai_super_agent.config import settings
@@ -21,8 +22,8 @@ class TaskNode:
     agent_id: str
     instruction: str
     dependencies: List[str]
-    estimated_duration: int = None
-    parameters: Dict[str, Any] = None
+    estimated_duration: Optional[int] = None
+    parameters: Optional[Dict[str, Any]] = None
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
