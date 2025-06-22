@@ -34,41 +34,50 @@ def setup_plans_api(app):
 
     @plans_bp.route("/plans/<uuid:plan_id>", methods=["GET"])
     def get_plan(plan_id):
-        import asyncio
-        import threading
-        
-        def run_async():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                return loop.run_until_complete(PlanRepo.get(str(plan_id)))
-            finally:
-                loop.close()
-        
         try:
-            plan = run_async()
-            return jsonify(plan or {}), 200
+            from sqlalchemy import select
+            from ai_super_agent.db import sync_engine, plans_table
+            
+            with sync_engine.connect() as conn:
+                result = conn.execute(select(plans_table).where(plans_table.c.id == str(plan_id)))
+                row = result.first()
+                if row:
+                    plan = {
+                        "id": row.id,
+                        "outline": row.outline,
+                        "created_at": row.created_at,
+                        "updated_at": row.updated_at
+                    }
+                    return jsonify(plan), 200
+                return jsonify({}), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
     @plans_bp.route("/plans/<uuid:plan_id>", methods=["PATCH"])
     def update_plan(plan_id):
-        import asyncio
-        import threading
-        
-        def run_async(outline_data):
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                return loop.run_until_complete(PlanRepo.insert(str(plan_id), outline_data))
-            finally:
-                loop.close()
-        
         try:
+            from sqlalchemy.dialects.postgresql import insert
+            from ai_super_agent.db import sync_engine, plans_table
+            
             body = request.get_json()
             if not body or "outline" not in body:
                 return jsonify({"error": "Missing outline in request body"}), 400
-            run_async(body["outline"])
+            
+            with sync_engine.connect() as conn:
+                # Use PostgreSQL UPSERT functionality
+                stmt = insert(plans_table).values(
+                    id=str(plan_id),
+                    outline=body["outline"]
+                )
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=['id'],
+                    set_=dict(
+                        outline=stmt.excluded.outline,
+                        updated_at=stmt.excluded.updated_at
+                    )
+                )
+                conn.execute(stmt)
+                conn.commit()
             return "", 204
         except Exception as e:
             return jsonify({"error": str(e)}), 500
