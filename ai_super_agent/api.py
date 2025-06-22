@@ -580,35 +580,24 @@ def get_tasks():
         plan_id = request.args.get('plan_id')
         
         if plan_id:
-            # Get the current event loop or create a new one
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
+            # Get plan outline to return as tasks synchronously
+            outline = PlanRepo.get_outline(plan_id)
+            if not outline:
+                return jsonify([]), 200
             
-            # Get plan outline to return as tasks
-            async def _get_plan_tasks():
-                outline = await PlanRepo.get_outline(plan_id)
-                if not outline:
-                    return None
-                
-                # Convert plan steps to task format
-                tasks = []
-                for step in outline:
-                    tasks.append({
-                        "id": step.get('step_id'),
-                        "plan_id": plan_id,
-                        "step_id": step.get('step_id'),
-                        "agent_id": step.get('agent_id'),
-                        "instruction": step.get('instruction'),
-                        "status": "pending",  # Default status for now
-                        "dependencies": step.get('dependencies', []),
-                        "parameters": step.get('parameters', {})
-                    })
-                return tasks
-            
-            tasks = loop.run_until_complete(_get_plan_tasks())
+            # Convert plan steps to task format
+            tasks = []
+            for step in outline:
+                tasks.append({
+                    "id": step.get('step_id'),
+                    "plan_id": plan_id,
+                    "step_id": step.get('step_id'),
+                    "agent_id": step.get('agent_id'),
+                    "instruction": step.get('instruction'),
+                    "status": "pending",  # Default status for now
+                    "dependencies": step.get('dependencies', []),
+                    "parameters": step.get('parameters', {})
+                })
             
             if tasks is None:
                 return jsonify({"error": "Plan not found"}), 404

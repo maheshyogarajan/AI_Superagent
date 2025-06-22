@@ -10,7 +10,7 @@ class TaskFactory:
     """Factory for creating and enqueuing tasks from plan outlines."""
     
     @staticmethod
-    async def enqueue_from_outline(plan_id: str, outline: List[Dict[str, Any]]) -> List[str]:
+    def enqueue_from_outline(plan_id: str, outline: List[Dict[str, Any]]) -> List[str]:
         """
         Create and enqueue tasks from a plan outline.
         
@@ -21,6 +21,8 @@ class TaskFactory:
         Returns:
             List of created task IDs
         """
+        from ai_super_agent.message_queue import memory_broker
+        
         task_ids = []
         
         for step in outline:
@@ -43,8 +45,8 @@ class TaskFactory:
                 }
             )
             
-            # Enqueue the task
-            await enqueue(envelope.recipient, envelope)
+            # Enqueue the task synchronously
+            memory_broker.put((envelope.recipient, envelope))
             
         return task_ids
     
