@@ -50,9 +50,6 @@
 }
 
 @layer base {
-  * {
-    @apply border-slate-200;
-  }
   body {
     @apply bg-white text-slate-900;
   }
