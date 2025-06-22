@@ -109,7 +109,7 @@ export function PlanInspector() {
         });
         
         // Auto-redirect to Task Runner with plan_id parameter
-        navigate(`/task-runner?plan=${currentPlan.plan_id}`);
+        navigate(`/task-runner?plan_id=${currentPlan.plan_id}`);
       }
     } catch (error) {
       console.error('Error approving plan:', error);
