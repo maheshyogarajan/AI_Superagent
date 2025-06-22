@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CheckCircle, FileText, Upload, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import MarkdownEditor from './MarkdownEditor';
 
 interface StrategyDiffProps {
@@ -9,6 +11,7 @@ interface StrategyDiffProps {
 }
 
 export default function StrategyDiff({ planId, planStatus, className = "" }: StrategyDiffProps) {
+  const navigate = useNavigate();
   const [diffMd, setDiffMd] = useState('');
   const [isPromoting, setIsPromoting] = useState(false);
   const [promotionSuccess, setPromotionSuccess] = useState(false);
@@ -130,10 +133,27 @@ ${failedTasks.length > 0 ?
         throw new Error('Failed to promote strategy');
       }
 
+      const result = await response.json();
+      
+      // Show success toast and redirect
+      toast.success('Strategy promoted successfully!', {
+        duration: 4000,
+        position: 'top-center',
+      });
+      
       setPromotionSuccess(true);
-      setTimeout(() => setPromotionSuccess(false), 3000);
+      
+      // Redirect to strategy repository after short delay
+      setTimeout(() => {
+        navigate('/strategies');
+      }, 1500);
+      
     } catch (error) {
       console.error('Failed to save strategy:', error);
+      toast.error('Failed to promote strategy. Please try again.', {
+        duration: 4000,
+        position: 'top-center',
+      });
       throw error;
     } finally {
       setIsPromoting(false);

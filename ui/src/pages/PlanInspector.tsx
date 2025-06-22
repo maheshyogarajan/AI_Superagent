@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
@@ -60,9 +61,13 @@ export function PlanInspector() {
           status: result.plan.status || 'draft',
           created_at: new Date().toISOString()
         });
+        toast.success('Plan generated successfully!');
+      } else {
+        toast.error('Failed to generate plan. Please try again.');
       }
     } catch (error) {
       console.error('Error generating plan:', error);
+      toast.error('Failed to generate plan. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -109,11 +114,18 @@ export function PlanInspector() {
           status: 'running'
         });
         
+        toast.success('Plan approved and execution started!');
+        
         // Auto-redirect to Task Runner with plan_id parameter
-        navigate(`/task-runner?plan_id=${currentPlan.plan_id}`);
+        setTimeout(() => {
+          navigate(`/task-runner?plan_id=${currentPlan.plan_id}`);
+        }, 1000);
+      } else {
+        toast.error('Failed to approve plan. Please try again.');
       }
     } catch (error) {
       console.error('Error approving plan:', error);
+      toast.error('Failed to approve plan. Please try again.');
     } finally {
       setIsExecuting(false);
     }
