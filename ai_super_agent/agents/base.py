@@ -106,7 +106,8 @@ class BaseAgent(ABC):
                     params={"result": result, "original_message_id": envelope.id},
                     sender=self.agent_id,
                     recipient=envelope.sender,
-                    correlation_id=envelope.correlation_id
+                    correlation_id=envelope.correlation_id,
+                    instruction=f"Response to {envelope.instruction if hasattr(envelope, 'instruction') else 'task'}"
                 )
                 await self.send_message(response_envelope)
                 
@@ -118,6 +119,7 @@ class BaseAgent(ABC):
                 error_envelope = MCPEnvelope(
                     method="error",
                     params={"error": str(e), "original_message_id": envelope.id},
+                    instruction=f"Error handling {envelope.instruction if hasattr(envelope, 'instruction') else 'task'}",
                     sender=self.agent_id,
                     recipient=envelope.sender,
                     correlation_id=envelope.correlation_id

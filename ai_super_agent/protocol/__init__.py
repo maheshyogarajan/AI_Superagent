@@ -17,6 +17,12 @@ class MCPEnvelope(dict):
             self['params'] = {}
         if 'context' not in self:
             self['context'] = {}
+        if 'instruction' not in self:
+            self['instruction'] = kwargs.get('method', 'execute_task')
+        if 'sender' not in self:
+            self['sender'] = 'system'
+        if 'recipient' not in self:
+            self['recipient'] = 'coordinator'
     
     def __getattr__(self, name):
         """Allow attribute access for dict keys."""
