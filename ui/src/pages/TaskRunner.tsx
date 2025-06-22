@@ -271,7 +271,11 @@ export function TaskRunner() {
       </div>
 
       {/* Plan Drawer */}
-      <PlanDrawer planId={planId} onClose={() => setPlanId(null)} />
+      <PlanDrawer 
+        planId={planId || undefined} 
+        isOpen={!!planId} 
+        onClose={() => setPlanId(null)} 
+      />
     </div>
   )
 }
