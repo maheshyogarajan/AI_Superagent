@@ -375,7 +375,14 @@ def execute_plan(plan_id):
             task_id=plan.task_id
         )
         
-        success = enqueue(envelope)
+        # Enqueue synchronously using memory broker
+        from ai_super_agent.message_queue import memory_broker
+        try:
+            memory_broker.put(("coordinator", envelope))
+            success = True
+        except Exception as e:
+            logger.error(f"Failed to enqueue task: {e}")
+            success = False
         
         if success:
             return jsonify({
