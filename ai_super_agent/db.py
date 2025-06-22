@@ -29,6 +29,7 @@ plans_table = Table(
     metadata,
     Column('id', String, primary_key=True),
     Column('outline', JSON, nullable=False),
+    Column('status', String, server_default='draft'),
     Column('created_at', DateTime(timezone=True), server_default=func.now()),
     Column('updated_at', DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 )
