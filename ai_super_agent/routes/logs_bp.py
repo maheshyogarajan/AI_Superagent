@@ -35,7 +35,7 @@ def stream_logs():
                     # Get recent task updates for this plan
                     result = conn.execute(
                         text("""
-                            SELECT t.id, t.step_id, t.agent_id, t.instruction, t.status, 
+                            SELECT t.id, t.agent_id, t.instruction, t.status, 
                                    t.updated_at, e.context, e.created_at as event_time
                             FROM tasks t 
                             LEFT JOIN mcp_envelopes e ON e.plan_id = t.plan_id 
@@ -55,13 +55,12 @@ def stream_logs():
                             "type": "task_update",
                             "plan_id": plan_id,
                             "task_id": row[0],
-                            "step_id": row[1],
-                            "agent_id": row[2],
-                            "instruction": row[3],
-                            "status": row[4],
-                            "timestamp": row[5].isoformat() if row[5] else None,
-                            "context": row[6] if row[6] else {},
-                            "event_time": row[7].isoformat() if row[7] else None
+                            "agent_id": row[1],
+                            "instruction": row[2],
+                            "status": row[3],
+                            "timestamp": row[4].isoformat() if row[4] else None,
+                            "context": row[5] if row[5] else {},
+                            "event_time": row[6].isoformat() if row[6] else None
                         }
                         
                         yield f"data: {json.dumps(event_data)}\n\n"
