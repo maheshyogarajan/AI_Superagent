@@ -50,8 +50,8 @@ def approve_plan(pid):
                 import asyncio
                 
                 envelope = MCPEnvelope(
-                    id=task_id,
-                    plan_id=str(pid),
+                    task_id=task_id,
+                    scenario_id=str(pid),
                     sender="task_factory",
                     recipient=step.get("agent_id", step.get("agent", "coordinator")),
                     method="execute_task",
