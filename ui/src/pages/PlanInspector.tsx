@@ -161,9 +161,9 @@ export function PlanInspector() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Plan Inspector</h1>
         {currentPlan && (
-          <Badge variant="outline" className={getAgentBadgeColor(currentPlan.status)}>
+          <div className={`px-2 py-1 rounded-full text-xs font-semibold ${getAgentBadgeColor(currentPlan.status)}`}>
             {currentPlan.status.toUpperCase()}
-          </Badge>
+          </div>
         )}
       </div>
 
@@ -235,9 +235,9 @@ export function PlanInspector() {
                 </div>
                 <div>
                   <span className="font-medium">Status:</span>
-                  <Badge className={getAgentBadgeColor(currentPlan.status)}>
+                  <div className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ml-2 ${getAgentBadgeColor(currentPlan.status)}`}>
                     {currentPlan.status}
-                  </Badge>
+                  </div>
                 </div>
                 <div>
                   <span className="font-medium">Estimated Duration:</span>
@@ -286,7 +286,7 @@ export function PlanInspector() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Badge variant="outline">{step.step_id}</Badge>
+                      <div className="px-2 py-1 rounded border text-xs font-medium">{step.step_id}</div>
                       <Select
                         value={step.agent_id}
                         onValueChange={(value) => updateNodeAgent(index, value)}
@@ -310,9 +310,9 @@ export function PlanInspector() {
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <span>{step.estimated_duration}s</span>
                       {step.dependencies.length > 0 && (
-                        <Badge variant="secondary" className="text-xs">
+                        <div className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">
                           Depends: {step.dependencies.join(', ')}
-                        </Badge>
+                        </div>
                       )}
                     </div>
                   </div>
