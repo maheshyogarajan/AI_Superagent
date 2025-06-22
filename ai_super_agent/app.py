@@ -35,31 +35,43 @@ def setup_plans_api(app):
     @plans_bp.route("/plans/<uuid:plan_id>", methods=["GET"])
     def get_plan(plan_id):
         import asyncio
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        import threading
+        
+        def run_async():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                return loop.run_until_complete(PlanRepo.get(str(plan_id)))
+            finally:
+                loop.close()
+        
         try:
-            plan = loop.run_until_complete(PlanRepo.get(str(plan_id)))
+            plan = run_async()
             return jsonify(plan or {}), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-        finally:
-            loop.close()
 
     @plans_bp.route("/plans/<uuid:plan_id>", methods=["PATCH"])
     def update_plan(plan_id):
         import asyncio
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        import threading
+        
+        def run_async(outline_data):
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                return loop.run_until_complete(PlanRepo.insert(str(plan_id), outline_data))
+            finally:
+                loop.close()
+        
         try:
             body = request.get_json()
             if not body or "outline" not in body:
                 return jsonify({"error": "Missing outline in request body"}), 400
-            loop.run_until_complete(PlanRepo.insert(str(plan_id), body["outline"]))
+            run_async(body["outline"])
             return "", 204
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-        finally:
-            loop.close()
 
     app.register_blueprint(plans_bp)
 
