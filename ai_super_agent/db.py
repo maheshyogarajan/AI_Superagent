@@ -7,8 +7,11 @@ from sqlalchemy.sql import func
 # Database URL from environment
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
-    # Convert to asyncpg format
+    # Convert to asyncpg format and handle sslmode parameter
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+    # Remove sslmode parameter as asyncpg doesn't support it
+    if "?sslmode=" in DATABASE_URL:
+        DATABASE_URL = DATABASE_URL.split("?sslmode=")[0]
 
 # Create async engine
 async_engine = create_async_engine(DATABASE_URL)
