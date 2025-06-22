@@ -358,40 +358,7 @@ def execute_plan(plan_id):
         }), 500
 
 
-@api_bp.route('/plans/<plan_id>/approve', methods=['POST'])
-def approve_plan(plan_id):
-    """Approve a plan and enqueue its tasks for execution."""
-    try:
-        import asyncio
-        from ai_super_agent.repos.plan_repo import PlanRepo
-        from ai_super_agent.services.task_factory import TaskFactory
-        
-        # Get the current event loop or create a new one
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        
-        # Run async operations in sync context
-        async def _approve():
-            outline = await PlanRepo.get_outline(plan_id)
-            if not outline:
-                return None, None
-                
-            task_ids = await TaskFactory.enqueue_from_outline(plan_id, outline)
-            await PlanRepo.mark_running(plan_id)
-            return task_ids, outline
-        
-        task_ids, outline = loop.run_until_complete(_approve())
-        
-        if task_ids is None:
-            return jsonify({"error": "Plan not found"}), 404
-            
-        return jsonify({"task_ids": task_ids}), 202
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+# Legacy approve route removed - handled by plans_bp
 
 
 
