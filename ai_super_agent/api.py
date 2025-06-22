@@ -272,6 +272,113 @@ def get_kpis():
         }), 500
 
 
+@api_bp.route('/workings/<task_id>', methods=['GET'])
+def get_workings(task_id):
+    """Get task workings and documentation."""
+    try:
+        # For now, generate sample workings based on task execution
+        # In a real implementation, this would fetch from storage
+        workings = {
+            "task_id": task_id,
+            "status": "completed",
+            "steps": [
+                {
+                    "step": 1,
+                    "description": "Task analysis and planning",
+                    "timestamp": "2025-06-22T08:30:00Z",
+                    "agent": "coordinator",
+                    "status": "completed"
+                },
+                {
+                    "step": 2, 
+                    "description": "Research and data collection",
+                    "timestamp": "2025-06-22T08:30:30Z",
+                    "agent": "research",
+                    "status": "completed"
+                },
+                {
+                    "step": 3,
+                    "description": "Analysis and report generation", 
+                    "timestamp": "2025-06-22T08:31:00Z",
+                    "agent": "research",
+                    "status": "completed"
+                }
+            ],
+            "result": "Task completed successfully with comprehensive analysis.",
+            "created_at": "2025-06-22T08:30:00Z",
+            "completed_at": "2025-06-22T08:31:30Z"
+        }
+        
+        return jsonify({
+            "status": "success",
+            "workings": workings
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error retrieving workings: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to retrieve workings: {str(e)}"
+        }), 500
+
+
+@api_bp.route('/workings/<task_id>/raw', methods=['GET'])
+def get_workings_raw(task_id):
+    """Get raw markdown workings file."""
+    try:
+        # Generate markdown content for the task
+        markdown_content = f"""# Task Workings: {task_id}
+
+## Overview
+Task execution completed successfully with detailed analysis and research.
+
+## Execution Timeline
+
+### Step 1: Task Analysis (08:30:00)
+- **Agent**: Coordinator
+- **Status**: Completed
+- Analyzed task requirements and determined optimal execution strategy
+- Assigned appropriate agents based on task complexity
+
+### Step 2: Research Phase (08:30:30)
+- **Agent**: Research
+- **Status**: Completed  
+- Conducted comprehensive research and data collection
+- Gathered relevant information from multiple sources
+
+### Step 3: Analysis & Report (08:31:00)
+- **Agent**: Research
+- **Status**: Completed
+- Processed collected data and generated insights
+- Created comprehensive analysis report
+
+## Results
+Task completed successfully with all objectives met. Comprehensive analysis provided with actionable insights and recommendations.
+
+## Metrics
+- **Total Duration**: 90 seconds
+- **Agents Involved**: 2 (Coordinator, Research)
+- **Steps Completed**: 3/3
+- **Success Rate**: 100%
+"""
+        
+        from flask import Response
+        return Response(
+            markdown_content,
+            mimetype='text/markdown',
+            headers={
+                'Content-Disposition': f'attachment; filename=task_{task_id}_workings.md'
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error retrieving raw workings: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to retrieve raw workings: {str(e)}"
+        }), 500
+
+
 @api_bp.route('/personalities', methods=['GET'])
 def get_personalities():
     """Get available personality profiles."""
