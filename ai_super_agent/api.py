@@ -600,3 +600,56 @@ def internal_error(error):
         "status": "error",
         "message": "Internal server error"
     }), 500
+
+
+@api_bp.route('/tasks', methods=['GET'])
+def get_tasks():
+    """Get tasks, optionally filtered by plan_id."""
+    try:
+        from flask import request
+        import asyncio
+        from ai_super_agent.repos.plan_repo import PlanRepo
+        
+        plan_id = request.args.get('plan_id')
+        
+        if plan_id:
+            # Get the current event loop or create a new one
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            # Get plan outline to return as tasks
+            async def _get_plan_tasks():
+                outline = await PlanRepo.get_outline(plan_id)
+                if not outline:
+                    return None
+                
+                # Convert plan steps to task format
+                tasks = []
+                for step in outline:
+                    tasks.append({
+                        "id": step.get('step_id'),
+                        "plan_id": plan_id,
+                        "step_id": step.get('step_id'),
+                        "agent_id": step.get('agent_id'),
+                        "instruction": step.get('instruction'),
+                        "status": "pending",  # Default status for now
+                        "dependencies": step.get('dependencies', []),
+                        "parameters": step.get('parameters', {})
+                    })
+                return tasks
+            
+            tasks = loop.run_until_complete(_get_plan_tasks())
+            
+            if tasks is None:
+                return jsonify({"error": "Plan not found"}), 404
+                
+            return jsonify({"tasks": tasks}), 200
+        else:
+            # Return empty tasks list if no plan_id provided
+            return jsonify({"tasks": []}), 200
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
