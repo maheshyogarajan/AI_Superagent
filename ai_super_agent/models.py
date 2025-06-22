@@ -77,6 +77,7 @@ class Task(Base):
     agent_id = Column(String)
     instruction = Column(Text)
     status = Column(String, default='pending')
+    result = Column(JSON)  # Store task execution results
     parameters = Column(JSON)
     dependencies = Column(JSON)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -155,6 +155,30 @@ Research task successfully completed by {self.agent_id} agent.
         except Exception as e:
             logger.error(f"Failed to update workings file with completion: {e}")
         
+        # Update task status in database
+        try:
+            from ai_super_agent.services.task_completion import task_completion_service
+            task_id = envelope.context.get("task_id") if envelope.context else None
+            if task_id:
+                completion_success = task_completion_service.complete_task(
+                    task_id=task_id,
+                    result={
+                        "status": "success",
+                        "summary": research_result.get("summary", "Research completed successfully"),
+                        "recommendations": research_result.get("recommendations", "Strategic insights provided"),
+                        "provider": research_result.get("provider", "fallback"),
+                        "workings_file": workings_file,
+                        "agent_id": self.agent_id
+                    },
+                    status="completed"
+                )
+                if completion_success:
+                    logger.info(f"Task {task_id} status updated to completed")
+                else:
+                    logger.warning(f"Failed to update task {task_id} status")
+        except Exception as e:
+            logger.error(f"Error updating task completion status: {e}")
+        
         logger.info(f"Research task completed successfully")
         
         return {

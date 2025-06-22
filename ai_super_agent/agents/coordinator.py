@@ -207,17 +207,27 @@ Analyzing instruction to determine optimal agent assignment...
             target_agent = "research"  # Default to research for now
         
         # Create task envelope for the target agent
+        # Generate a unique task_id for database tracking
+        import uuid
+        task_id = str(uuid.uuid4())
+        
+        # Add task_id to context for database updates
+        enhanced_context = context.copy() if context else {}
+        enhanced_context["task_id"] = task_id
+        enhanced_context["original_sender"] = envelope.sender
+        enhanced_context["workings_file"] = workings_file
+        
         task_envelope = MCPEnvelope(
             method="execute_task",
             params={
                 "instruction": instruction,
-                "context": context,
+                "context": enhanced_context,
                 "original_sender": envelope.sender
             },
             sender=self.agent_id,
             recipient=target_agent,
             instruction=instruction,
-            context=context,
+            context=enhanced_context,
             correlation_id=envelope.id  # Use original message ID for tracking
         )
         

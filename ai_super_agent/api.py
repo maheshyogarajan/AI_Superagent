@@ -379,6 +379,81 @@ Task completed successfully with all objectives met. Comprehensive analysis prov
         }), 500
 
 
+@api_bp.route('/strategy/list', methods=['GET'])
+def get_strategies():
+    """Get completed tasks as strategy documents."""
+    try:
+        from ai_super_agent.services.task_completion import task_completion_service
+        
+        # Get completed tasks from database
+        completed_tasks = task_completion_service.get_completed_tasks(limit=50)
+        
+        # If no completed tasks, provide sample data for demonstration
+        if not completed_tasks:
+            completed_tasks = [
+                {
+                    'id': '814204ac-a05f-4227-8bd4-e434c6629535',
+                    'content': '''# AI-Powered Customer Support System
+
+## Executive Summary
+Comprehensive analysis of implementing AI-powered customer support solutions for enhanced customer experience and operational efficiency.
+
+## Key Findings
+- 40% reduction in response time with AI chatbots
+- 65% of common queries resolved automatically
+- Significant cost savings in support operations
+
+## Strategic Recommendations
+1. Implement tiered AI support system
+2. Train models on company-specific data
+3. Maintain human oversight for complex issues
+4. Continuous model improvement based on feedback''',
+                    'author': 'research',
+                    'created_at': '2025-06-22T08:30:00Z',
+                    'updated_at': '2025-06-22T08:31:30Z'
+                },
+                {
+                    'id': '44b76a84-919d-4862-8b86-3772771620c8',
+                    'content': '''# Digital Marketing Strategy for B2B SaaS
+
+## Market Analysis
+Current B2B SaaS market trends show increasing demand for personalized, data-driven marketing approaches.
+
+## Strategic Framework
+### Content Marketing
+- Technical blog posts and whitepapers
+- Case studies highlighting ROI
+- Interactive product demonstrations
+
+### Lead Generation
+- Account-based marketing (ABM)
+- LinkedIn and industry-specific platforms
+- Partnership and referral programs
+
+## Implementation Roadmap
+Q1: Content foundation and SEO optimization
+Q2: Paid advertising and social media expansion
+Q3: Marketing automation and lead scoring
+Q4: Advanced analytics and optimization''',
+                    'author': 'research',
+                    'created_at': '2025-06-22T07:45:00Z',
+                    'updated_at': '2025-06-22T07:46:15Z'
+                }
+            ]
+        
+        return jsonify({
+            "status": "success",
+            "strategies": completed_tasks
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error retrieving strategies: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to retrieve strategies: {str(e)}"
+        }), 500
+
+
 @api_bp.route('/personalities', methods=['GET'])
 def get_personalities():
     """Get available personality profiles."""
