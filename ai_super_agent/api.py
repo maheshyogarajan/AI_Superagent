@@ -307,6 +307,46 @@ def get_execution_plan(plan_id):
         }), 500
 
 
+@api_bp.route('/plan/<plan_id>/approve', methods=['POST'])
+def approve_plan(plan_id):
+    """Approve a plan for execution."""
+    try:
+        plan = plan_inspector.plan_repo.load_plan(plan_id)
+        if not plan:
+            return jsonify({
+                "status": "error",
+                "message": "Plan not found"
+            }), 404
+        
+        if plan.status != "draft":
+            return jsonify({
+                "status": "error",
+                "message": f"Only draft plans can be approved. Current status: {plan.status}"
+            }), 400
+        
+        # Approve the plan
+        success = plan_inspector.approve_plan(plan_id)
+        
+        if success:
+            return jsonify({
+                "status": "success",
+                "message": "Plan approved successfully",
+                "plan_id": plan_id
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "Failed to approve plan"
+            }), 500
+        
+    except Exception as e:
+        logger.error(f"Error approving plan: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to approve plan: {str(e)}"
+        }), 500
+
+
 @api_bp.route('/plan/<plan_id>/execute', methods=['POST'])
 def execute_plan(plan_id):
     """Execute an approved execution plan."""
