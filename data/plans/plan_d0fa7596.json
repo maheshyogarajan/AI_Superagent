@@ -1,0 +1,67 @@
+{
+  "plan_id": "plan_d0fa7596",
+  "task_id": "f3f1532c-95e8-48f0-96ea-66bd306d7060",
+  "original_instruction": "Research market trends for renewable energy and create a comprehensive strategic plan",
+  "steps": [
+    {
+      "step_id": "coord_001",
+      "agent_id": "coordinator",
+      "instruction": "Analyze task requirements and determine optimal execution strategy",
+      "dependencies": [],
+      "estimated_duration": 30,
+      "parameters": {
+        "original_instruction": "Research market trends for renewable energy and create a comprehensive strategic plan",
+        "complexity": "high",
+        "required_agents": [
+          "coordinator",
+          "research"
+        ]
+      }
+    },
+    {
+      "step_id": "coord_002",
+      "agent_id": "coordinator",
+      "instruction": "Route task to research agent with context and parameters",
+      "dependencies": [
+        "coord_001"
+      ],
+      "estimated_duration": 15,
+      "parameters": {
+        "target_agent": "research",
+        "routing_reason": "Keywords found: research, market"
+      }
+    },
+    {
+      "step_id": "research_001",
+      "agent_id": "research",
+      "instruction": "Research market trends for renewable energy and create a comprehensive strategic plan",
+      "dependencies": [
+        "coord_002"
+      ],
+      "estimated_duration": 180,
+      "parameters": {
+        "research_type": "comprehensive",
+        "keywords": [
+          "research",
+          "market"
+        ]
+      }
+    },
+    {
+      "step_id": "coord_003",
+      "agent_id": "coordinator",
+      "instruction": "Compile and validate research results",
+      "dependencies": [
+        "research_001"
+      ],
+      "estimated_duration": 30,
+      "parameters": {
+        "validation_required": true,
+        "output_format": "structured_report"
+      }
+    }
+  ],
+  "total_estimated_duration": 255,
+  "created_at": "2025-06-22T06:07:31.530440",
+  "status": "draft"
+}

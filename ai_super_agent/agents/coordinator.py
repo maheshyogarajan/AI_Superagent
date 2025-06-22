@@ -9,6 +9,8 @@ from ai_super_agent.agents.base import BaseAgent
 from ai_super_agent.models.mcp import MCPEnvelope
 from ai_super_agent.config import settings
 from ai_super_agent.services.plan_inspector import PlanInspector
+from ai_super_agent.catalog import get_best_agent, decompose_instruction
+from ai_super_agent.repos.plan_repo import PlanRepo
 from ai_super_agent.repos.plan_repository import PlanRepository, PlanStep
 from dataclasses import dataclass
 
@@ -98,12 +100,32 @@ class CoordinatorAgent(BaseAgent):
             user_instruction: The user's task instruction
             
         Returns:
-            Dictionary containing plan outline and first task record
+            Dictionary containing plan_id and outline with auto-assigned agents
         """
-        plan_nodes = build_task_dag(user_instruction)  # existing helper
+        import uuid
+        
+        # Generate unique plan ID
+        plan_id = str(uuid.uuid4())
+        
+        # Decompose instruction into steps
+        steps = decompose_instruction(user_instruction)
+        
+        # Auto-assign best agent for each step using capability matrix
+        plan_nodes = []
+        for step in steps:
+            agent = get_best_agent(step['type'], step.get('complexity', 3))
+            plan_nodes.append({
+                **step,
+                "agent_id": agent.agent_id,
+                "estimated_duration": agent.estimated_duration
+            })
+        
+        # Save plan to database with draft status
+        await PlanRepo.insert(plan_id, plan_nodes)
+        
         return {
-            "plan_outline": [n.to_dict() for n in plan_nodes],
-            "first_task": plan_nodes[0].to_task_record() if plan_nodes else None
+            "plan_id": plan_id,
+            "outline": plan_nodes
         }
     
     async def handle(self, envelope: MCPEnvelope) -> Dict[str, Any]:
