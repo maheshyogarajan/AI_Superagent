@@ -5,6 +5,7 @@ import WorkingsViewer from './pages/WorkingsViewer'
 import AgentCustomizer from './pages/AgentCustomizer'
 import AgentEditor from './pages/AgentEditor'
 import { PlanInspector } from './pages/PlanInspector'
+import Logs from './pages/Logs'
 
 export const router = createBrowserRouter([
   {
@@ -30,5 +31,9 @@ export const router = createBrowserRouter([
   {
     path: '/plan-inspector',
     element: <PlanInspector />
+  },
+  {
+    path: '/logs',
+    element: <Logs />
   }
 ])

@@ -1,214 +1,254 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { Badge } from '../components/ui/badge'
-import { Button } from '../components/ui/button'
-import { ScrollText, Download, RefreshCw } from 'lucide-react'
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { VerticalTimeline, VerticalTimelineElement } from 'react-vertical-timeline-component';
+import 'react-vertical-timeline-component/style.min.css';
+import { Activity, Clock, CheckCircle, AlertCircle, User, Zap } from 'lucide-react';
 
-interface LogEntry {
-  timestamp: string
-  level: string
-  message: string
-  agent?: string
+interface LogEvent {
+  type: 'task_update' | 'heartbeat' | 'error';
+  plan_id: string;
+  task_id?: string;
+  agent_id?: string;
+  instruction?: string;
+  status?: string;
+  timestamp?: string;
+  context?: any;
+  event_time?: string;
+  message?: string;
 }
 
-export function Logs() {
-  const [logs, setLogs] = useState<LogEntry[]>([])
-  const [loading, setLoading] = useState(true)
-  const [autoRefresh, setAutoRefresh] = useState(true)
+const getStatusIcon = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case 'completed':
+      return <CheckCircle className="w-4 h-4" />;
+    case 'running':
+    case 'processing':
+      return <Zap className="w-4 h-4" />;
+    case 'failed':
+    case 'error':
+      return <AlertCircle className="w-4 h-4" />;
+    case 'pending':
+      return <Clock className="w-4 h-4" />;
+    default:
+      return <Activity className="w-4 h-4" />;
+  }
+};
+
+const getStatusColor = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case 'completed':
+      return '#22c55e';
+    case 'running':
+    case 'processing':
+      return '#3b82f6';
+    case 'failed':
+    case 'error':
+      return '#ef4444';
+    case 'pending':
+      return '#f59e0b';
+    default:
+      return '#6b7280';
+  }
+};
+
+const mapLogToElement = (log: LogEvent) => {
+  const isError = log.type === 'error';
+  const isHeartbeat = log.type === 'heartbeat';
+  
+  if (isHeartbeat) {
+    return {
+      className: 'vertical-timeline-element--work',
+      contentStyle: { 
+        background: '#f8fafc', 
+        color: '#64748b',
+        border: '1px solid #e2e8f0'
+      },
+      contentArrowStyle: { borderRight: '7px solid #e2e8f0' },
+      date: new Date(log.timestamp || '').toLocaleTimeString(),
+      iconStyle: { background: '#64748b', color: '#fff' },
+      icon: <Activity className="w-4 h-4" />,
+      children: (
+        <div>
+          <h3 className="vertical-timeline-element-title text-sm font-medium">
+            System Heartbeat
+          </h3>
+          <p className="text-xs text-gray-500">
+            Plan {log.plan_id.slice(0, 8)}... monitoring active
+          </p>
+        </div>
+      )
+    };
+  }
+
+  if (isError) {
+    return {
+      className: 'vertical-timeline-element--work',
+      contentStyle: { 
+        background: '#fef2f2', 
+        color: '#dc2626',
+        border: '1px solid #fecaca'
+      },
+      contentArrowStyle: { borderRight: '7px solid #fecaca' },
+      date: new Date(log.timestamp || '').toLocaleTimeString(),
+      iconStyle: { background: '#ef4444', color: '#fff' },
+      icon: <AlertCircle className="w-4 h-4" />,
+      children: (
+        <div>
+          <h3 className="vertical-timeline-element-title text-sm font-medium">
+            System Error
+          </h3>
+          <p className="text-xs mt-1">
+            {log.message}
+          </p>
+        </div>
+      )
+    };
+  }
+
+  return {
+    className: 'vertical-timeline-element--work',
+    contentStyle: { 
+      background: '#fff', 
+      color: '#1f2937',
+      border: `2px solid ${getStatusColor(log.status || '')}`
+    },
+    contentArrowStyle: { borderRight: `7px solid ${getStatusColor(log.status || '')}` },
+    date: new Date(log.timestamp || log.event_time || '').toLocaleTimeString(),
+    iconStyle: { 
+      background: getStatusColor(log.status || ''), 
+      color: '#fff' 
+    },
+    icon: getStatusIcon(log.status || ''),
+    children: (
+      <div>
+        <h3 className="vertical-timeline-element-title text-sm font-medium flex items-center gap-2">
+          <User className="w-4 h-4" />
+          {log.agent_id || 'Unknown Agent'}
+        </h3>
+        <h4 className="vertical-timeline-element-subtitle text-xs text-gray-600 mt-1">
+          Status: <span className="font-semibold" style={{ color: getStatusColor(log.status || '') }}>
+            {log.status || 'Unknown'}
+          </span>
+        </h4>
+        <p className="text-xs mt-2 text-gray-700">
+          {log.instruction || 'No instruction provided'}
+        </p>
+        {log.task_id && (
+          <p className="text-xs mt-1 text-gray-500">
+            Task: {log.task_id.slice(0, 8)}...
+          </p>
+        )}
+      </div>
+    )
+  };
+};
+
+export default function Logs() {
+  const [searchParams] = useSearchParams();
+  const planId = searchParams.get('plan_id');
+  const [logs, setLogs] = useState<LogEvent[]>([]);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
 
   useEffect(() => {
-    const fetchLogs = async () => {
+    if (!planId) {
+      setConnectionStatus('disconnected');
+      return;
+    }
+
+    const eventSource = new EventSource(`/logs/stream?plan_id=${planId}`);
+    
+    eventSource.onopen = () => {
+      setConnectionStatus('connected');
+    };
+
+    eventSource.onmessage = (event) => {
       try {
-        // Simulate log entries since we don't have a real logs endpoint
-        const simulatedLogs: LogEntry[] = [
-          {
-            timestamp: new Date().toISOString(),
-            level: 'INFO',
-            message: 'System initialized successfully',
-            agent: 'system'
-          },
-          {
-            timestamp: new Date(Date.now() - 60000).toISOString(),
-            level: 'INFO',
-            message: 'Coordinator agent started',
-            agent: 'coordinator'
-          },
-          {
-            timestamp: new Date(Date.now() - 120000).toISOString(),
-            level: 'INFO',
-            message: 'Research agent started',
-            agent: 'research'
-          },
-          {
-            timestamp: new Date(Date.now() - 180000).toISOString(),
-            level: 'DEBUG',
-            message: 'Memory broker initialized',
-            agent: 'broker'
-          }
-        ]
-        setLogs(simulatedLogs)
+        const logEvent: LogEvent = JSON.parse(event.data);
+        setLogs(prevLogs => {
+          // Keep only the last 50 events for performance
+          const newLogs = [logEvent, ...prevLogs].slice(0, 50);
+          return newLogs;
+        });
       } catch (error) {
-        console.error('Failed to fetch logs:', error)
-      } finally {
-        setLoading(false)
+        console.error('Failed to parse SSE event:', error);
       }
-    }
+    };
 
-    fetchLogs()
-    
-    if (autoRefresh) {
-      const interval = setInterval(fetchLogs, 5000)
-      return () => clearInterval(interval)
-    }
-  }, [autoRefresh])
+    eventSource.onerror = () => {
+      setConnectionStatus('disconnected');
+    };
 
-  const getLevelBadgeVariant = (level: string) => {
-    switch (level.toLowerCase()) {
-      case 'error':
-        return 'destructive'
-      case 'warn':
-      case 'warning':
-        return 'secondary'
-      case 'info':
-        return 'default'
-      case 'debug':
-        return 'outline'
-      default:
-        return 'outline'
-    }
-  }
+    return () => {
+      eventSource.close();
+    };
+  }, [planId]);
 
-  const handleDownloadLogs = () => {
-    const logContent = logs.map(log => 
-      `[${log.timestamp}] ${log.level} ${log.agent ? `(${log.agent})` : ''}: ${log.message}`
-    ).join('\n')
-    
-    const blob = new Blob([logContent], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `ai-agent-logs-${new Date().toISOString().split('T')[0]}.txt`
-    link.click()
-    URL.revokeObjectURL(url)
-  }
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">System Logs</h1>
-            <p className="text-muted-foreground">
-              Monitor agent system activity and debug information
+  if (!planId) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Plan ID Required</h1>
+            <p className="text-gray-600">
+              Please provide a plan_id parameter to view logs for a specific execution plan.
             </p>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAutoRefresh(!autoRefresh)}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? 'animate-spin' : ''}`} />
-              {autoRefresh ? 'Auto Refresh On' : 'Auto Refresh Off'}
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownloadLogs}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Download Logs
-            </Button>
           </div>
         </div>
       </div>
+    );
+  }
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ScrollText className="h-5 w-5" />
-            Recent Activity
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {loading ? (
-              <div className="space-y-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-muted rounded w-1/2"></div>
-                  </div>
-                ))}
-              </div>
-            ) : logs.length === 0 ? (
-              <div className="text-center py-8">
-                <ScrollText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No logs available</p>
-              </div>
-            ) : (
-              logs.map((log, index) => (
-                <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                  <Badge variant={getLevelBadgeVariant(log.level)} className="mt-0.5">
-                    {log.level}
-                  </Badge>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {new Date(log.timestamp).toLocaleString()}
-                      </span>
-                      {log.agent && (
-                        <Badge variant="outline" className="text-xs">
-                          {log.agent}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm break-words">{log.message}</p>
-                  </div>
-                </div>
-              ))
-            )}
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto p-8">
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Live Execution Timeline
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Real-time monitoring for plan {planId.slice(0, 8)}...
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${
+                connectionStatus === 'connected' ? 'bg-green-500' : 
+                connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'
+              }`}></div>
+              <span className="text-sm text-gray-600 capitalize">
+                {connectionStatus}
+              </span>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {logs.filter(log => log.level.toLowerCase() === 'info').length}
-              </div>
-              <div className="text-sm text-muted-foreground">Info Messages</div>
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          {logs.length === 0 ? (
+            <div className="text-center py-12">
+              <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Waiting for Events
+              </h3>
+              <p className="text-gray-600">
+                {connectionStatus === 'connected' 
+                  ? 'Connected and monitoring for task updates...' 
+                  : 'Establishing connection to event stream...'}
+              </p>
             </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-600">
-                {logs.filter(log => log.level.toLowerCase() === 'warn' || log.level.toLowerCase() === 'warning').length}
-              </div>
-              <div className="text-sm text-muted-foreground">Warnings</div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">
-                {logs.filter(log => log.level.toLowerCase() === 'error').length}
-              </div>
-              <div className="text-sm text-muted-foreground">Errors</div>
-            </div>
-          </CardContent>
-        </Card>
+          ) : (
+            <VerticalTimeline animate={false}>
+              {logs.map((log, index) => (
+                <VerticalTimelineElement
+                  key={`${log.type}-${log.timestamp || log.event_time}-${index}`}
+                  {...mapLogToElement(log)}
+                />
+              ))}
+            </VerticalTimeline>
+          )}
+        </div>
       </div>
     </div>
-  )
+  );
 }
