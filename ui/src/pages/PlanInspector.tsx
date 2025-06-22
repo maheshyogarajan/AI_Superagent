@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
@@ -31,6 +32,7 @@ const AVAILABLE_AGENTS = [
 ];
 
 export function PlanInspector() {
+  const navigate = useNavigate();
   const [instruction, setInstruction] = useState('');
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -127,11 +129,14 @@ export function PlanInspector() {
       });
 
       const result = await response.json();
-      if (result.status === 'success') {
+      if (result.task_ids && result.task_ids.length > 0) {
         setCurrentPlan({
           ...currentPlan,
-          status: 'approved'
+          status: 'running'
         });
+        
+        // Auto-redirect to Task Runner with plan_id parameter
+        navigate(`/task-runner?plan=${currentPlan.plan_id}`);
       }
     } catch (error) {
       console.error('Error approving plan:', error);
