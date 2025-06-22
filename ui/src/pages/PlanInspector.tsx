@@ -102,7 +102,7 @@ export function PlanInspector() {
 
     setIsExecuting(true);
     try {
-      const response = await fetch(`/api/plans/${currentPlan.plan_id}/approve`, {
+      const response = await fetch(`/plans/${currentPlan.plan_id}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
