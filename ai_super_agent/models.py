@@ -1,7 +1,8 @@
 """SQLAlchemy models for AI Super Agent."""
 from uuid import uuid4
-from sqlalchemy import Column, String, Float, ForeignKey
+from sqlalchemy import Column, String, Float, ForeignKey, Text, JSON, DateTime
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.sql import func
 from ai_super_agent.db import metadata, async_session
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -52,3 +53,44 @@ class Personality(Base):
             "analytical": self.analytical,
             "max_temperature": self.max_temperature
         }
+
+
+class Plan(Base):
+    """Plan model for execution plans."""
+    __tablename__ = 'plans'
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    instruction = Column(Text, nullable=False)
+    outline = Column(JSON, nullable=False)
+    status = Column(Text, default='draft')
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class Task(Base):
+    """Task model for individual execution tasks."""
+    __tablename__ = 'tasks'
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    plan_id = Column(UUID(as_uuid=True), ForeignKey('plans.id'))
+    step_id = Column(String)
+    agent_id = Column(String)
+    instruction = Column(Text)
+    status = Column(String, default='pending')
+    parameters = Column(JSON)
+    dependencies = Column(JSON)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class MCPEnvelope(Base):
+    """MCP Envelope model for message tracking."""
+    __tablename__ = 'mcp_envelopes'
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    plan_id = Column(UUID(as_uuid=True))
+    sender = Column(String)
+    recipient = Column(String)
+    instruction = Column(Text)
+    context = Column(JSON)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
