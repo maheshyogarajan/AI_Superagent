@@ -1,0 +1,24 @@
+{
+  "plan_id": "plan_1aa80494",
+  "task_id": "63ad2344-46dc-4272-b5fc-615686f4f752",
+  "original_instruction": "how much automation is too much automation with AI for a tax firm?",
+  "steps": [
+    {
+      "step_id": "coord_001",
+      "agent_id": "coordinator",
+      "instruction": "Analyze task requirements and determine optimal execution strategy",
+      "dependencies": [],
+      "estimated_duration": 30,
+      "parameters": {
+        "original_instruction": "how much automation is too much automation with AI for a tax firm?",
+        "complexity": "medium",
+        "required_agents": [
+          "coordinator"
+        ]
+      }
+    }
+  ],
+  "total_estimated_duration": 30,
+  "created_at": "2025-06-22T05:47:51.505085",
+  "status": "draft"
+}
