@@ -1,141 +1,128 @@
-"""Plan repository for storing and retrieving execution plans using SQLAlchemy."""
-
-from sqlalchemy import insert, select, update, delete
-from ai_super_agent.db import async_session, plans_table
+"""Plan repository for database operations."""
+from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, text
+import os
+import uuid
 from typing import List, Dict, Any, Optional
+from ai_super_agent.models import Plan
 
 
 class PlanRepo:
-    """Repository for managing execution plans in the database."""
+    """Repository for plan persistence operations."""
     
     @staticmethod
-    async def insert(task_id: str, outline: List[Dict[str, Any]]) -> None:
+    def insert(session: Session, instruction: str, outline: List[Dict[str, Any]]) -> str:
         """
-        Insert a new plan into the database.
+        Insert a new plan with draft status.
         
         Args:
-            task_id: Unique identifier for the task/plan
-            outline: List of plan steps as dictionaries
-        """
-        async with async_session() as s:
-            await s.execute(insert(plans_table).values(id=task_id, outline=outline))
-            await s.commit()
-
-    @staticmethod
-    async def get(plan_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Retrieve a plan by its ID.
-        
-        Args:
-            plan_id: Unique identifier for the plan
+            session: Database session
+            instruction: The original instruction
+            outline: List of plan nodes with assigned agents
             
         Returns:
-            Plan record as dictionary or None if not found
+            Generated plan_id
         """
-        async with async_session() as s:
-            result = await s.execute(select(plans_table).where(plans_table.c.id == plan_id))
-            row = result.first()
-            if row:
+        plan = Plan(
+            id=str(uuid.uuid4()),
+            instruction=instruction, 
+            outline=outline,
+            status='draft'
+        )
+        session.add(plan)
+        session.commit()
+        return plan.id
+
+    @staticmethod
+    def mark_running(session: Session, plan_id: str) -> None:
+        """
+        Mark plan status as running.
+        
+        Args:
+            session: Database session
+            plan_id: The plan UUID to update
+        """
+        session.query(Plan).filter(Plan.id == plan_id).update({"status": "running"})
+        session.commit()
+
+    @staticmethod
+    def get_outline(plan_id: str) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get plan outline by plan_id using direct database connection.
+        
+        Args:
+            plan_id: The plan UUID
+            
+        Returns:
+            List of plan nodes/steps or None if not found
+        """
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            return None
+        
+        engine = create_engine(database_url)
+        with engine.connect() as conn:
+            result = conn.execute(
+                text("SELECT outline FROM plans WHERE id = :plan_id"),
+                {"plan_id": plan_id}
+            ).fetchone()
+            
+            return result[0] if result else None
+
+    @staticmethod
+    def get_plan(plan_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get complete plan by plan_id.
+        
+        Args:
+            plan_id: The plan UUID
+            
+        Returns:
+            Plan dictionary or None if not found
+        """
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            return None
+        
+        engine = create_engine(database_url)
+        with engine.connect() as conn:
+            result = conn.execute(
+                text("SELECT id, instruction, outline, status, created_at, updated_at FROM plans WHERE id = :plan_id"),
+                {"plan_id": plan_id}
+            ).fetchone()
+            
+            if result:
                 return {
-                    "id": row.id,
-                    "outline": row.outline,
-                    "created_at": row.created_at,
-                    "updated_at": row.updated_at
+                    "id": result[0],
+                    "instruction": result[1],
+                    "outline": result[2],
+                    "status": result[3],
+                    "created_at": result[4].isoformat() if result[4] else None,
+                    "updated_at": result[5].isoformat() if result[5] else None
                 }
             return None
 
     @staticmethod
-    async def update(plan_id: str, outline: List[Dict[str, Any]]) -> bool:
+    def update_status(plan_id: str, status: str) -> bool:
         """
-        Update an existing plan's outline.
+        Update plan status.
         
         Args:
-            plan_id: Unique identifier for the plan
-            outline: Updated list of plan steps
+            plan_id: The plan UUID
+            status: New status value
             
         Returns:
-            True if plan was updated, False if not found
+            True if successful, False otherwise
         """
-        async with async_session() as s:
-            result = await s.execute(
-                plans_table.update()
-                .where(plans_table.c.id == plan_id)
-                .values(outline=outline)
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            return False
+        
+        engine = create_engine(database_url)
+        with engine.connect() as conn:
+            result = conn.execute(
+                text("UPDATE plans SET status = :status, updated_at = NOW() WHERE id = :plan_id"),
+                {"plan_id": plan_id, "status": status}
             )
-            await s.commit()
+            conn.commit()
             return result.rowcount > 0
-
-    @staticmethod
-    async def delete(plan_id: str) -> bool:
-        """
-        Delete a plan by its ID.
-        
-        Args:
-            plan_id: Unique identifier for the plan
-            
-        Returns:
-            True if plan was deleted, False if not found
-        """
-        async with async_session() as s:
-            result = await s.execute(
-                plans_table.delete().where(plans_table.c.id == plan_id)
-            )
-            await s.commit()
-            return result.rowcount > 0
-
-    @staticmethod
-    async def get_outline(plan_id: str) -> Optional[List[Dict[str, Any]]]:
-        """
-        Retrieve a plan's outline by ID.
-        
-        Args:
-            plan_id: Unique identifier for the plan
-            
-        Returns:
-            Plan outline as list of steps or None if not found
-        """
-        async with async_session() as s:
-            result = await s.execute(select(plans_table.c.outline).where(plans_table.c.id == plan_id))
-            row = result.first()
-            return row.outline if row else None
-
-    @staticmethod
-    async def mark_running(plan_id: str) -> bool:
-        """
-        Mark a plan as running status.
-        
-        Args:
-            plan_id: Unique identifier for the plan
-            
-        Returns:
-            True if plan was updated, False if not found
-        """
-        async with async_session() as s:
-            result = await s.execute(
-                plans_table.update()
-                .where(plans_table.c.id == plan_id)
-                .values(status='running')
-            )
-            await s.commit()
-            return result.rowcount > 0
-
-    @staticmethod
-    async def list_all() -> List[Dict[str, Any]]:
-        """
-        Retrieve all plans from the database.
-        
-        Returns:
-            List of all plan records as dictionaries
-        """
-        async with async_session() as s:
-            result = await s.execute(select(plans_table))
-            rows = result.fetchall()
-            return [
-                {
-                    "id": row.id,
-                    "outline": row.outline,
-                    "created_at": row.created_at,
-                    "updated_at": row.updated_at
-                }
-                for row in rows
-            ]
