@@ -25,6 +25,45 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def setup_plans_api(app):
+    """Configure Flask to serve plans API routes"""
+    from flask import Blueprint, jsonify, request
+    from ai_super_agent.repos.plan_repo import PlanRepo
+    
+    plans_bp = Blueprint("plans", __name__)
+
+    @plans_bp.route("/plans/<uuid:plan_id>", methods=["GET"])
+    def get_plan(plan_id):
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            plan = loop.run_until_complete(PlanRepo.get(str(plan_id)))
+            return jsonify(plan or {}), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        finally:
+            loop.close()
+
+    @plans_bp.route("/plans/<uuid:plan_id>", methods=["PATCH"])
+    def update_plan(plan_id):
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            body = request.get_json()
+            if not body or "outline" not in body:
+                return jsonify({"error": "Missing outline in request body"}), 400
+            loop.run_until_complete(PlanRepo.insert(str(plan_id), body["outline"]))
+            return "", 204
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        finally:
+            loop.close()
+
+    app.register_blueprint(plans_bp)
+
+
 def create_flask_app() -> Flask:
     """Create and configure the Flask application."""
     app = Flask(__name__)
@@ -32,6 +71,9 @@ def create_flask_app() -> Flask:
     
     # Register API blueprint
     app.register_blueprint(api_bp, url_prefix='/api')
+    
+    # Setup plans API
+    setup_plans_api(app)
     
     # Setup UI serving
     setup_ui_serving(app)
