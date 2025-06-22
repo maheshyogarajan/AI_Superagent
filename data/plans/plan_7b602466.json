@@ -1,0 +1,24 @@
+{
+  "plan_id": "plan_7b602466",
+  "task_id": "7281cff5-26f8-47d1-a2f6-ca7ee8d6a140",
+  "original_instruction": "Develop comprehensive AI ethics guidelines for enterprise deployment",
+  "steps": [
+    {
+      "step_id": "coord_001",
+      "agent_id": "coordinator",
+      "instruction": "Analyze task requirements and determine optimal execution strategy",
+      "dependencies": [],
+      "estimated_duration": 30,
+      "parameters": {
+        "original_instruction": "Develop comprehensive AI ethics guidelines for enterprise deployment",
+        "complexity": "high",
+        "required_agents": [
+          "coordinator"
+        ]
+      }
+    }
+  ],
+  "total_estimated_duration": 30,
+  "created_at": "2025-06-22T08:20:15.372975",
+  "status": "draft"
+}
