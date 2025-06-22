@@ -6,6 +6,7 @@ import AgentCustomizer from './pages/AgentCustomizer'
 import AgentEditor from './pages/AgentEditor'
 import { PlanInspector } from './pages/PlanInspector'
 import Logs from './pages/Logs'
+import StrategyViewer from './pages/StrategyViewer'
 
 export const router = createBrowserRouter([
   {
@@ -35,5 +36,9 @@ export const router = createBrowserRouter([
   {
     path: '/logs',
     element: <Logs />
+  },
+  {
+    path: '/strategies',
+    element: <StrategyViewer />
   }
 ])

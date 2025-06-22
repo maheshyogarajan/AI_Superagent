@@ -16,6 +16,7 @@ function App() {
               <a href="/task-runner" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">Task Runner</a>
               <a href="/plan-inspector" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">Plan Inspector</a>
               <a href="/logs" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">Live Timeline</a>
+              <a href="/strategies" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">Strategy Repository</a>
               <a href="/agent-customizer" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">Agent Customizer</a>
             </div>
           </div>
