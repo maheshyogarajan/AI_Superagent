@@ -84,6 +84,42 @@ class PlanRepo:
             return result.rowcount > 0
 
     @staticmethod
+    async def get_outline(plan_id: str) -> Optional[List[Dict[str, Any]]]:
+        """
+        Retrieve a plan's outline by ID.
+        
+        Args:
+            plan_id: Unique identifier for the plan
+            
+        Returns:
+            Plan outline as list of steps or None if not found
+        """
+        async with async_session() as s:
+            result = await s.execute(select(plans_table.c.outline).where(plans_table.c.id == plan_id))
+            row = result.first()
+            return row.outline if row else None
+
+    @staticmethod
+    async def mark_running(plan_id: str) -> bool:
+        """
+        Mark a plan as running status.
+        
+        Args:
+            plan_id: Unique identifier for the plan
+            
+        Returns:
+            True if plan was updated, False if not found
+        """
+        async with async_session() as s:
+            result = await s.execute(
+                plans_table.update()
+                .where(plans_table.c.id == plan_id)
+                .values(status='running')
+            )
+            await s.commit()
+            return result.rowcount > 0
+
+    @staticmethod
     async def list_all() -> List[Dict[str, Any]]:
         """
         Retrieve all plans from the database.
