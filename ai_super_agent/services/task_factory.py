@@ -29,8 +29,8 @@ class TaskFactory:
             
             # Create MCP envelope for the task
             envelope = MCPEnvelope(
-                id=task_id,
-                plan_id=plan_id,
+                task_id=task_id,
+                scenario_id=plan_id,
                 sender="task_factory",
                 recipient=step.get("agent_id", step.get("agent", "coordinator")),
                 method="execute_task",
@@ -63,8 +63,8 @@ class TaskFactory:
         task_id = str(uuid.uuid4())
         
         return MCPEnvelope(
-            id=task_id,
-            plan_id=plan_id,
+            task_id=task_id,
+            scenario_id=plan_id,
             sender="task_factory",
             recipient=step.get("agent_id", step.get("agent", "coordinator")),
             method="execute_task",

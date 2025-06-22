@@ -3,9 +3,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, text
 import os
 import uuid
+import json
 from typing import List, Dict, Any, Optional
-# Temporary removal of Plan model import to fix startup issue
-# from ai_super_agent.models import Plan
 
 
 class PlanRepo:
@@ -35,7 +34,7 @@ class PlanRepo:
         with engine.connect() as conn:
             conn.execute(
                 text("INSERT INTO plans (id, instruction, outline, status, created_at, updated_at) VALUES (:id, :instruction, :outline, 'draft', NOW(), NOW())"),
-                {"id": plan_id, "instruction": instruction, "outline": outline}
+                {"id": plan_id, "instruction": instruction, "outline": json.dumps(outline)}
             )
             conn.commit()
         

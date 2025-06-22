@@ -102,7 +102,9 @@ class CoordinatorAgent(BaseAgent):
         Returns:
             Dictionary containing plan_id and outline with auto-assigned agents
         """
-        from ..repos import PlanRepo, AgentCatalog
+        # Temporarily comment out imports to fix startup issues
+        # from ..repos.plan_repo import PlanRepo
+        # from ..catalog import get_best_agent
         from ..catalog import decompose_instruction
         
         # Decompose instruction into steps
