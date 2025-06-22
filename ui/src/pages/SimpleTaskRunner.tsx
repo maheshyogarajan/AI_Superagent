@@ -3,18 +3,20 @@ import { Link, useSearchParams } from 'react-router-dom'
 
 export function SimpleTaskRunner() {
   const [searchParams] = useSearchParams();
-  const planId = searchParams.get('plan');
+  const planId = searchParams.get('plan_id');
   
   const [instruction, setInstruction] = useState('')
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null)
   const [status, setStatus] = useState<string>('idle')
   const [planTasks, setPlanTasks] = useState<any[]>([])
   const [isLoadingPlan, setIsLoadingPlan] = useState(false)
+  const [sseConnected, setSseConnected] = useState(false)
 
   // Fetch tasks when plan_id is provided in URL
   useEffect(() => {
     if (planId) {
       fetchPlanTasks(planId);
+      setupSSE(planId);
     }
   }, [planId]);
 
@@ -32,6 +34,42 @@ export function SimpleTaskRunner() {
     } finally {
       setIsLoadingPlan(false);
     }
+  };
+
+  const setupSSE = (planId: string) => {
+    const eventSource = new EventSource(`/api/tasks/stream?plan_id=${planId}`);
+    
+    eventSource.onopen = () => {
+      setSseConnected(true);
+      console.log('SSE connection opened for plan:', planId);
+    };
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const taskUpdate = JSON.parse(event.data);
+        // Update specific task in the list
+        setPlanTasks(prevTasks => 
+          prevTasks.map(task => 
+            task.id === taskUpdate.task_id 
+              ? { ...task, status: taskUpdate.status, result: taskUpdate.result }
+              : task
+          )
+        );
+      } catch (error) {
+        console.error('Error parsing SSE data:', error);
+      }
+    };
+    
+    eventSource.onerror = () => {
+      setSseConnected(false);
+      console.log('SSE connection error, retrying...');
+    };
+
+    // Cleanup on unmount
+    return () => {
+      eventSource.close();
+      setSseConnected(false);
+    };
   };
 
   const handleSubmit = async () => {
@@ -79,7 +117,15 @@ export function SimpleTaskRunner() {
       {/* Plan Tasks Live View */}
       {planId && (
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Plan Execution Progress</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Plan Execution Progress</h2>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${sseConnected ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+              <span className="text-sm text-gray-600">
+                {sseConnected ? 'Live Updates' : 'Connecting...'}
+              </span>
+            </div>
+          </div>
           {isLoadingPlan ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
