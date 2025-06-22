@@ -111,11 +111,15 @@ class CoordinatorAgent(BaseAgent):
         nodes = decompose_instruction(instruction)
         
         # Auto-assign best agent for each step using capability matrix
+        from ..catalog import get_best_agent
         for n in nodes:
-            n["agent"] = AgentCatalog.pick(n["type"])
+            best_agent = get_best_agent(n.get("type", "general"))
+            n["agent"] = best_agent.agent_id
         
-        # Persist plan with status='draft'
-        plan_id = PlanRepo.insert(instruction, nodes)
+        # Persist plan with status='draft' - temporarily simplified
+        import uuid
+        plan_id = str(uuid.uuid4())
+        # TODO: Implement proper plan persistence when PlanRepo is available
         
         return {"plan_id": plan_id, "outline": nodes}
     

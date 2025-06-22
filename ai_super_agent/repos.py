@@ -125,7 +125,7 @@ class TaskFactory:
         Returns:
             List of created task IDs
         """
-        from .message_queue.memory_broker import memory_broker
+        from .message_queue import memory_broker
         from .protocol import MCPEnvelope
         
         task_ids = []
@@ -150,7 +150,7 @@ class TaskFactory:
             )
             
             # Enqueue synchronously using memory broker
-            memory_broker.enqueue(envelope.recipient, envelope)
+            memory_broker.put((envelope.recipient, envelope))
         
         return task_ids
 
