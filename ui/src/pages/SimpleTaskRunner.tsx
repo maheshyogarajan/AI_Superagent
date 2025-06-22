@@ -119,11 +119,19 @@ export function SimpleTaskRunner() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Plan Execution Progress</h2>
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${sseConnected ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-              <span className="text-sm text-gray-600">
-                {sseConnected ? 'Live Updates' : 'Connecting...'}
-              </span>
+            <div className="flex items-center gap-4">
+              <Link 
+                to={`/logs?plan_id=${planId}`}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors"
+              >
+                View Live Timeline
+              </Link>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${sseConnected ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                <span className="text-sm text-gray-600">
+                  {sseConnected ? 'Live Updates' : 'Connecting...'}
+                </span>
+              </div>
             </div>
           </div>
           {isLoadingPlan ? (
