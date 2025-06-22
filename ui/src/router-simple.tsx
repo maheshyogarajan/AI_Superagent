@@ -4,6 +4,7 @@ import { SimpleTaskRunner } from './pages/SimpleTaskRunner'
 import WorkingsViewer from './pages/WorkingsViewer'
 import AgentCustomizer from './pages/AgentCustomizer'
 import AgentEditor from './pages/AgentEditor'
+import { PlanInspector } from './pages/PlanInspector'
 
 export const router = createBrowserRouter([
   {
@@ -25,5 +26,9 @@ export const router = createBrowserRouter([
   {
     path: '/agents/:agentId/edit',
     element: <AgentEditor />
+  },
+  {
+    path: '/plan-inspector',
+    element: <PlanInspector />
   }
 ])
